@@ -194,8 +194,12 @@ export function runDiagnostics(snapshot: TelemetrySnapshot): DiagnosticMessage[]
     }
   }
   if (out.length === 0) {
-    const healthy = RULES[RULES.length - 1];
-    out.push({ id: healthy.id, severity: "info", text: healthy.text(snapshot), at: snapshot.at });
+    out.push({
+      id: "healthy",
+      severity: "info",
+      text: "✅ Tüm sistemler normal aralıkta. Sürüş verileri kaydediliyor.",
+      at: snapshot.at,
+    });
   }
   const order = { critical: 0, warn: 1, info: 2 } as const;
   return out.sort((a, b) => order[a.severity] - order[b.severity]);

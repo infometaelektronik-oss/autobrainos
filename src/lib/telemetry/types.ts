@@ -39,7 +39,7 @@ export interface DiagnosticMessage {
   id: string;
   severity: "info" | "warn" | "critical";
   text: string;
-  detail?: string;
+  detail?: string | undefined;
   at: number;
 }
 

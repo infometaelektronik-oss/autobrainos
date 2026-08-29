@@ -59,7 +59,7 @@ export class VehicleSimulator {
   private egt = 180;
   private rpm = 820;
   private speed = 0;
-  private misfire = [0, 0, 0, 0];
+  private misfire: [number, number, number, number] = [0, 0, 0, 0];
   private knock = 0;
   private sootLoad = 8.4;
   faults = new Set<FaultKey>();
