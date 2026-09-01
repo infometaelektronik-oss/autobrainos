@@ -121,6 +121,8 @@ export const SIGNALS = {
 
 export type SignalKey = keyof typeof SIGNALS;
 
+export const SIGNAL_META: Record<SignalKey, SignalMeta> = SIGNALS;
+
 export const SIGNAL_KEYS = Object.keys(SIGNALS) as SignalKey[];
 
 export const GROUP_LABELS: Record<SignalGroup, string> = {

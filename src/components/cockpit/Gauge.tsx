@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { SIGNALS, formatSignal, severityOf, type SignalKey } from "@/lib/telemetry/signals";
+import { SIGNAL_META, formatSignal, severityOf, type SignalKey } from "@/lib/telemetry/signals";
 import type { SignalStatus } from "@/lib/telemetry/signals";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +50,7 @@ export interface GaugeProps {
 }
 
 export function Gauge({ signalKey, value, status, variant = "tesla", className }: GaugeProps) {
-  const meta = SIGNALS[signalKey];
+  const meta = SIGNAL_META[signalKey];
   const available = status === "live" || status === "calculated";
   const smooth = useSmoothed(available ? value : meta.min);
   const ratio = Math.min(1, Math.max(0, (smooth - meta.min) / (meta.max - meta.min)));

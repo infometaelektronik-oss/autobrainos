@@ -1,4 +1,4 @@
-import { SIGNALS, formatSignal, severityOf, type SignalKey } from "@/lib/telemetry/signals";
+import { SIGNAL_META, formatSignal, severityOf, type SignalKey } from "@/lib/telemetry/signals";
 import type { Signal } from "@/lib/telemetry/types";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ export function SignalTile({
   signal: Signal;
   compact?: boolean;
 }) {
-  const meta = SIGNALS[signalKey];
+  const meta = SIGNAL_META[signalKey];
   const available = signal.status === "live" || signal.status === "calculated";
   const severity = available ? severityOf(signalKey, signal.value) : "normal";
   const ratio = available
