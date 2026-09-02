@@ -10,33 +10,74 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CodingRouteImport } from './routes/coding'
+import { Route as LogsRouteImport } from './routes/logs'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TelemetrySectionRouteImport } from './routes/telemetry.$section'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CodingRoute = CodingRouteImport.update({
+  id: '/coding',
+  path: '/coding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogsRoute = LogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TelemetrySectionRoute = TelemetrySectionRouteImport.update({
+  id: '/telemetry/$section',
+  path: '/telemetry/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/coding': typeof CodingRoute
+  '/logs': typeof LogsRoute
+  '/settings': typeof SettingsRoute
+  '/telemetry/$section': typeof TelemetrySectionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/coding': typeof CodingRoute
+  '/logs': typeof LogsRoute
+  '/settings': typeof SettingsRoute
+  '/telemetry/$section': typeof TelemetrySectionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/coding': typeof CodingRoute
+  '/logs': typeof LogsRoute
+  '/settings': typeof SettingsRoute
+  '/telemetry/$section': typeof TelemetrySectionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/coding' | '/logs' | '/settings' | '/telemetry/$section'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/coding' | '/logs' | '/settings' | '/telemetry/$section'
+  id:
+    '__root__' | '/' | '/coding' | '/logs' | '/settings' | '/telemetry/$section'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CodingRoute: typeof CodingRoute
+  LogsRoute: typeof LogsRoute
+  SettingsRoute: typeof SettingsRoute
+  TelemetrySectionRoute: typeof TelemetrySectionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +89,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coding': {
+      id: '/coding'
+      path: '/coding'
+      fullPath: '/coding'
+      preLoaderRoute: typeof CodingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logs': {
+      id: '/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof LogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/telemetry/$section': {
+      id: '/telemetry/$section'
+      path: '/telemetry/$section'
+      fullPath: '/telemetry/$section'
+      preLoaderRoute: typeof TelemetrySectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CodingRoute: CodingRoute,
+  LogsRoute: LogsRoute,
+  SettingsRoute: SettingsRoute,
+  TelemetrySectionRoute: TelemetrySectionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

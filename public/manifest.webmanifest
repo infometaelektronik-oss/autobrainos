@@ -1,0 +1,11 @@
+{
+  "name": "AutoBrain OS — Araç Kokpiti ve Telemetri",
+  "short_name": "AutoBrain OS",
+  "description": "OBD2 / CAN-Bus telemetri, yapay zeka teşhis ve medya kokpiti.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b1016",
+  "theme_color": "#0b1016",
+  "icons": [{ "src": "/favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" }]
+}
