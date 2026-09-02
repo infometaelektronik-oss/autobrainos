@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Activity, CircleDot, Gauge as GaugeIcon } from "lucide-react";
+import { Activity, CircleDot } from "lucide-react";
 
 import { DemoPanel } from "@/components/cockpit/DemoPanel";
 import { Gauge } from "@/components/cockpit/Gauge";
@@ -194,5 +194,3 @@ function Mini({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-export const CockpitIcon = GaugeIcon;
