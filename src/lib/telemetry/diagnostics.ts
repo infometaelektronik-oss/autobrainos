@@ -28,7 +28,8 @@ export const RULES: Rule[] = [
       return ltft !== null && map !== null && rpm !== null && ltft > 9 && map < 1.0 && rpm > 700;
     },
     text: () => "⚠️ Emme manifoldunda veya vakum hortumunda hava kaçağı var.",
-    detail: "LTFT pozitif yönde sapıyor ve MAP beklenenden düşük. Manifold contası ve vakum hortumlarını kontrol edin.",
+    detail:
+      "LTFT pozitif yönde sapıyor ve MAP beklenenden düşük. Manifold contası ve vakum hortumlarını kontrol edin.",
   },
   {
     id: "coolant-high",
@@ -36,40 +37,48 @@ export const RULES: Rule[] = [
     test: (s) => (v(s, "coolant") ?? 0) >= 97,
     text: (s) =>
       `⚠️ Motor soğutma suyu ${(v(s, "coolant") ?? 0).toFixed(0)}°C, radyatör fanı ${s.flags.fanOn ? "devrede" : "devrede değil"}.`,
-    detail: "Uzun süreli yüksek hararet silindir kapağına zarar verir. Fan, termostat ve su seviyesini kontrol edin.",
+    detail:
+      "Uzun süreli yüksek hararet silindir kapağına zarar verir. Fan, termostat ve su seviyesini kontrol edin.",
   },
   {
     id: "coolant-critical",
     severity: "critical",
     test: (s) => (v(s, "coolant") ?? 0) > 105,
-    text: (s) => `🛑 KRİTİK AŞIRI ISINMA! Hararet ${(v(s, "coolant") ?? 0).toFixed(0)}°C. Aracı güvenli şekilde durdurun.`,
+    text: (s) =>
+      `🛑 KRİTİK AŞIRI ISINMA! Hararet ${(v(s, "coolant") ?? 0).toFixed(0)}°C. Aracı güvenli şekilde durdurun.`,
   },
   {
     id: "oil-pressure",
     severity: "critical",
-    test: (s) => has(s, "oilPressure") && (v(s, "oilPressure") ?? 9) < 0.5 && (v(s, "rpm") ?? 0) > 600,
+    test: (s) =>
+      has(s, "oilPressure") && (v(s, "oilPressure") ?? 9) < 0.5 && (v(s, "rpm") ?? 0) > 600,
     text: () => "🛑 MOTOR YAĞ BASINCI YOK! Motoru derhal durdurun.",
-    detail: "Yağ pompası, basınç sensörü veya yağ seviyesi kritik. Motoru çalıştırmaya devam etmek sarma riski taşır.",
+    detail:
+      "Yağ pompası, basınç sensörü veya yağ seviyesi kritik. Motoru çalıştırmaya devam etmek sarma riski taşır.",
   },
   {
     id: "starter-drop",
     severity: "warn",
     test: (s) => (v(s, "crankMinVoltage") ?? 12) < 10,
-    text: (s) => `⚠️ Akü marş voltajı ${(v(s, "crankMinVoltage") ?? 0).toFixed(1)}V'a düştü, akü şarj tutmuyor.`,
-    detail: "Marş anındaki voltaj çöküşü akü içi plaka yorgunluğunu işaret eder. Akü testi yapılmalı.",
+    text: (s) =>
+      `⚠️ Akü marş voltajı ${(v(s, "crankMinVoltage") ?? 0).toFixed(1)}V'a düştü, akü şarj tutmuyor.`,
+    detail:
+      "Marş anındaki voltaj çöküşü akü içi plaka yorgunluğunu işaret eder. Akü testi yapılmalı.",
   },
   {
     id: "charge-low",
     severity: "warn",
     test: (s) => (v(s, "voltage") ?? 14) < 12.4 && !s.flags.cranking && (v(s, "rpm") ?? 0) > 700,
-    text: (s) => `⚠️ Şarj voltajı ${(v(s, "voltage") ?? 0).toFixed(2)}V — dinamo yeterli şarj vermiyor.`,
+    text: (s) =>
+      `⚠️ Şarj voltajı ${(v(s, "voltage") ?? 0).toFixed(2)}V — dinamo yeterli şarj vermiyor.`,
   },
   {
     id: "alternator-ripple",
     severity: "warn",
     test: (s) => (v(s, "alternatorRipple") ?? 0) > 180,
     text: () => "⚠️ Şarj dinamosu voltajında dalgalanma var, diyot tablası arızalı olabilir.",
-    detail: "AC ripple değeri normalin üzerinde. Dinamo diyot tablası veya regülatör kontrol edilmeli.",
+    detail:
+      "AC ripple değeri normalin üzerinde. Dinamo diyot tablası veya regülatör kontrol edilmeli.",
   },
   {
     id: "wss-mismatch",
@@ -117,7 +126,12 @@ export const RULES: Rule[] = [
         v(s, "misfire4") ?? 0,
       ) > 5,
     text: (s) => {
-      const counts = [v(s, "misfire1") ?? 0, v(s, "misfire2") ?? 0, v(s, "misfire3") ?? 0, v(s, "misfire4") ?? 0];
+      const counts = [
+        v(s, "misfire1") ?? 0,
+        v(s, "misfire2") ?? 0,
+        v(s, "misfire3") ?? 0,
+        v(s, "misfire4") ?? 0,
+      ];
       const worst = counts.indexOf(Math.max(...counts)) + 1;
       return `⚠️ ${worst}. silindirde tekleme sayımı artıyor, bujı/bobin veya enjektör kontrol edilmeli.`;
     },
@@ -126,13 +140,15 @@ export const RULES: Rule[] = [
     id: "knock",
     severity: "warn",
     test: (s) => (v(s, "knockRetard") ?? 0) > 3,
-    text: () => "⚠️ Vuruntu sensörü avansı geri çekiyor, yakıt kalitesi veya karbon birikmesi kontrol edilmeli.",
+    text: () =>
+      "⚠️ Vuruntu sensörü avansı geri çekiyor, yakıt kalitesi veya karbon birikmesi kontrol edilmeli.",
   },
   {
     id: "egt-high",
     severity: "warn",
     test: (s) => (v(s, "egt") ?? 0) > 780,
-    text: (s) => `⚠️ Egzoz gazı sıcaklığı ${(v(s, "egt") ?? 0).toFixed(0)}°C, turbo ve DPF için riskli bölgede.`,
+    text: (s) =>
+      `⚠️ Egzoz gazı sıcaklığı ${(v(s, "egt") ?? 0).toFixed(0)}°C, turbo ve DPF için riskli bölgede.`,
   },
   {
     id: "dpf",
@@ -153,7 +169,8 @@ export const RULES: Rule[] = [
     id: "tpms",
     severity: "warn",
     test: (s) =>
-      Math.min(v(s, "tpmsFL") ?? 9, v(s, "tpmsFR") ?? 9, v(s, "tpmsRL") ?? 9, v(s, "tpmsRR") ?? 9) < 2.0,
+      Math.min(v(s, "tpmsFL") ?? 9, v(s, "tpmsFR") ?? 9, v(s, "tpmsRL") ?? 9, v(s, "tpmsRR") ?? 9) <
+      2.0,
     text: (s) => {
       const map: Array<[string, number | null]> = [
         ["sol ön", v(s, "tpmsFL")],

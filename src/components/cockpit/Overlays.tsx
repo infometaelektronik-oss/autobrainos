@@ -43,7 +43,10 @@ export function CallOverlay() {
 
   useEffect(() => {
     if (call.status !== "in-call" || !call.startedAt) return;
-    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - call.startedAt!) / 1000)), 500);
+    const id = window.setInterval(
+      () => setElapsed(Math.floor((Date.now() - call.startedAt!) / 1000)),
+      500,
+    );
     return () => clearInterval(id);
   }, [call.status, call.startedAt]);
 
@@ -64,7 +67,8 @@ export function CallOverlay() {
         <p className="mt-1 text-muted-foreground">{call.number}</p>
         {!incoming && (
           <p className="digits mt-3 text-xl text-primary">
-            {String(Math.floor(elapsed / 60)).padStart(2, "0")}:{String(elapsed % 60).padStart(2, "0")}
+            {String(Math.floor(elapsed / 60)).padStart(2, "0")}:
+            {String(elapsed % 60).padStart(2, "0")}
           </p>
         )}
         <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">

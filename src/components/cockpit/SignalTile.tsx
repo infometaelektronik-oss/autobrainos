@@ -28,7 +28,9 @@ export function SignalTile({
       )}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-        <span className="label-xs truncate">{compact ? (meta.short ?? meta.label) : meta.label}</span>
+        <span className="label-xs truncate">
+          {compact ? (meta.short ?? meta.label) : meta.label}
+        </span>
         {signal.status === "calculated" && (
           <span className="shrink-0 rounded bg-accent/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-accent">
             hesap
@@ -61,7 +63,11 @@ export function SignalTile({
         <div
           className={cn(
             "h-full rounded-full transition-[width] duration-200",
-            severity === "danger" ? "bg-destructive" : severity === "warn" ? "bg-warn" : "bg-primary",
+            severity === "danger"
+              ? "bg-destructive"
+              : severity === "warn"
+                ? "bg-warn"
+                : "bg-primary",
           )}
           style={{ width: `${ratio * 100}%` }}
         />

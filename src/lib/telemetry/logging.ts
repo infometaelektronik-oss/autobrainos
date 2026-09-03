@@ -35,7 +35,8 @@ export function snapshotToRow(snapshot: TelemetrySnapshot): Record<string, numbe
   const row: Record<string, number | string> = { t: new Date(snapshot.at).toISOString() };
   for (const key of SIGNAL_KEYS) {
     const sig = snapshot.signals[key];
-    row[key] = sig.status === "live" || sig.status === "calculated" ? Number(sig.value.toFixed(3)) : "";
+    row[key] =
+      sig.status === "live" || sig.status === "calculated" ? Number(sig.value.toFixed(3)) : "";
   }
   row["regen"] = snapshot.flags.regen;
   row["fan"] = snapshot.flags.fanOn ? 1 : 0;

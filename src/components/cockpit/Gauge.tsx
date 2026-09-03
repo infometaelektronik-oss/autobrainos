@@ -4,7 +4,7 @@ import { SIGNAL_META, formatSignal, severityOf, type SignalKey } from "@/lib/tel
 import type { SignalStatus } from "@/lib/telemetry/signals";
 import { cn } from "@/lib/utils";
 
-const START = 135;
+const START = 225;
 const SWEEP = 270;
 
 function polar(cx: number, cy: number, r: number, deg: number) {
@@ -71,7 +71,14 @@ export function Gauge({ signalKey, value, status, variant = "tesla", className }
   return (
     <div className={cn("panel relative flex flex-col items-center justify-center p-3", className)}>
       <svg viewBox="0 0 200 200" className="w-full max-w-[240px]">
-        <path d={arc(100, 100, 84, START, START + SWEEP)} fill="none" stroke="var(--muted)" strokeWidth={10} strokeLinecap="round" opacity={0.55} />
+        <path
+          d={arc(100, 100, 84, START, START + SWEEP)}
+          fill="none"
+          stroke="var(--muted)"
+          strokeWidth={10}
+          strokeLinecap="round"
+          opacity={0.55}
+        />
         {available && (
           <path
             d={arc(100, 100, 84, START, angle)}
@@ -113,7 +120,14 @@ export function Gauge({ signalKey, value, status, variant = "tesla", className }
             <circle cx={100} cy={100} r={6} fill={stroke} />
           </g>
         )}
-        <text x={100} y={104} textAnchor="middle" className="digits" fontSize={variant === "race" ? 34 : 38} fill="currentColor">
+        <text
+          x={100}
+          y={104}
+          textAnchor="middle"
+          className="digits"
+          fontSize={variant === "race" ? 34 : 38}
+          fill="currentColor"
+        >
           {available ? formatSignal(signalKey, value) : "—"}
         </text>
         <text x={100} y={126} textAnchor="middle" fontSize={13} fill="var(--muted-foreground)">

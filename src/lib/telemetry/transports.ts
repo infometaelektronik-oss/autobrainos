@@ -111,7 +111,10 @@ export async function openBluetoothPipe(): Promise<BytePipe> {
   let notifyChar: BluetoothCharacteristicLike | null = null;
   for (const service of services) {
     for (const characteristic of await service.getCharacteristics()) {
-      if (!writeChar && (characteristic.properties.write || characteristic.properties.writeWithoutResponse)) {
+      if (
+        !writeChar &&
+        (characteristic.properties.write || characteristic.properties.writeWithoutResponse)
+      ) {
         writeChar = characteristic;
       }
       if (!notifyChar && characteristic.properties.notify) notifyChar = characteristic;
@@ -149,7 +152,7 @@ export async function openBluetoothPipe(): Promise<BytePipe> {
     },
     async close() {
       try {
-        device.gatt && (await device.gatt.connect()).disconnect();
+        if (device.gatt) (await device.gatt.connect()).disconnect();
       } catch {
         /* already disconnected */
       }

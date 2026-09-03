@@ -22,7 +22,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "AutoBrain OS — Araç Kokpiti ve Telemetri Sistemi" },
       {
         property: "og:description",
-        content: "Tesla tarzı karanlık kokpit arayüzü, canlı sensör telemetrisi ve Türkçe yapay zeka arıza teşhisi.",
+        content:
+          "Tesla tarzı karanlık kokpit arayüzü, canlı sensör telemetrisi ve Türkçe yapay zeka arıza teşhisi.",
       },
     ],
   }),
@@ -141,7 +142,11 @@ function GForcePad() {
         <Mini label="Boyuna" value={lon.status === "live" ? lon.value.toFixed(2) : "—"} />
         <Mini
           label="Yaw"
-          value={snapshot.signals.yawRate.status === "live" ? snapshot.signals.yawRate.value.toFixed(1) : "—"}
+          value={
+            snapshot.signals.yawRate.status === "live"
+              ? snapshot.signals.yawRate.value.toFixed(1)
+              : "—"
+          }
         />
       </div>
     </section>
@@ -176,7 +181,9 @@ function WheelPad() {
               <div className="label-xs !text-[9px] truncate">{wheel.label}</div>
               <div className="digits text-lg">{ok ? speed.value.toFixed(0) : "✕"}</div>
               <div className="text-[10px] text-muted-foreground">
-                {pressure.status === "live" ? `${pressure.value.toFixed(2)} ${SIGNAL_META[wheel.tpms].unit}` : "—"}
+                {pressure.status === "live"
+                  ? `${pressure.value.toFixed(2)} ${SIGNAL_META[wheel.tpms].unit}`
+                  : "—"}
               </div>
             </div>
           );

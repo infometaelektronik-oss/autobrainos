@@ -48,7 +48,9 @@ export function StatusBar({ onOpenSource }: { onOpenSource: () => void }) {
           <Cpu className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <div className="truncate font-display text-sm font-bold tracking-[0.18em]">AUTOBRAIN OS</div>
+          <div className="truncate font-display text-sm font-bold tracking-[0.18em]">
+            AUTOBRAIN OS
+          </div>
           <div className="truncate text-[11px] text-muted-foreground">
             {identity.make} · {identity.model} · Paket {identity.trim}
           </div>
@@ -77,7 +79,9 @@ export function StatusBar({ onOpenSource }: { onOpenSource: () => void }) {
         <Metric
           icon={Car}
           label="Dış Hava"
-          value={outside.status === "live" ? `${formatSignal("outsideTemp", outside.value)} °C` : "—"}
+          value={
+            outside.status === "live" ? `${formatSignal("outsideTemp", outside.value)} °C` : "—"
+          }
           severity="normal"
         />
 

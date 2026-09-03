@@ -131,7 +131,8 @@ export class VehicleSimulator {
       this.misfire[2] += Math.random() < 0.4 ? 1 : 0;
       this.misfire[0] += Math.random() < 0.05 ? 1 : 0;
     }
-    if (f.has("misfire") || loadPct > 88) this.knock = Math.min(50, this.knock + (Math.random() < 0.2 ? 1 : 0));
+    if (f.has("misfire") || loadPct > 88)
+      this.knock = Math.min(50, this.knock + (Math.random() < 0.2 ? 1 : 0));
     const timingAdv = 12 + (rpm / 1000) * 2.4 - (f.has("misfire") ? 4 : 0) + noise(0.5);
     const knockRetard = f.has("misfire") ? 4.6 + noise(0.8) : Math.max(0, noise(0.6));
 
