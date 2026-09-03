@@ -4,7 +4,7 @@ import { SIGNAL_META, formatSignal, severityOf, type SignalKey } from "@/lib/tel
 import type { SignalStatus } from "@/lib/telemetry/signals";
 import { cn } from "@/lib/utils";
 
-const START = 135;
+const START = 225;
 const SWEEP = 270;
 
 function polar(cx: number, cy: number, r: number, deg: number) {
