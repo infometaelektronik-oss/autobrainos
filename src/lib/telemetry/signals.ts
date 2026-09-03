@@ -627,6 +627,17 @@ export const SIGNALS = {
     decimals: 0,
     group: "emissions",
   },
+  egrError: {
+    label: "EGR Geri Bildirim Hatası",
+    short: "EGR Hata",
+    unit: "%",
+    min: 0,
+    max: 40,
+    decimals: 1,
+    group: "emissions",
+    warn: 6,
+    danger: 12,
+  },
   catTemp: {
     label: "Katalizör Sıcaklığı",
     unit: "°C",

@@ -160,6 +160,14 @@ export const RULES: Rule[] = [
         : `⚠️ DPF kurum yükü ${(v(s, "dpfSoot") ?? 0).toFixed(1)} g — uzun yol sürüşü ile rejenerasyona izin verin.`,
   },
   {
+    id: "egr-feedback",
+    severity: "warn",
+    test: (s) => (v(s, "egrError") ?? 0) > 6,
+    text: () => "⚠️ EGR valfi istenen pozisyona ulaşmıyor, valf kurum nedeniyle sıkışmış olabilir.",
+    detail:
+      "EGR geri bildirim hatası yüksek. Valf ve emme kolektöründe kurum temizliği gerekebilir.",
+  },
+  {
     id: "iat-high",
     severity: "info",
     test: (s) => (v(s, "iat") ?? 0) > 65,

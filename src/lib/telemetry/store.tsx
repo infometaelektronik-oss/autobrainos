@@ -125,6 +125,13 @@ export const HIDDEN_FEATURES: HiddenFeature[] = [
     enabled: false,
   },
   {
+    id: "hornBeepOnLock",
+    label: "Kilitlemede Korna Sesi",
+    description: "Kumanda ile kilitlenince korna kısa bir bip verir.",
+    minTrim: "B",
+    enabled: false,
+  },
+  {
     id: "fanRunOn",
     label: "Turbo Soğutma Fanı Devamı",
     description: "Kontak sonrası fan turboyu soğutmaya devam eder.",

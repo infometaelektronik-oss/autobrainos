@@ -234,6 +234,9 @@ export class VehicleSimulator {
       dpfAsh: 18.4,
       dpfDiffPressure: 26 + this.sootLoad * 3.4 + noise(2),
       egrPosition: Math.max(0, 34 - (loadPct / 100) * 30 + noise(1.5)),
+      egrError: f.has("dpfBlocked")
+        ? 9 + Math.abs(noise(2))
+        : Math.abs(noise(0.8)) + (loadPct > 70 ? 1.6 : 0.4),
       catTemp: 320 + (loadPct / 100) * 420 + noise(6),
       outsideTemp: 21 + noise(0.2),
     };
