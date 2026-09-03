@@ -152,7 +152,7 @@ export async function openBluetoothPipe(): Promise<BytePipe> {
     },
     async close() {
       try {
-        device.gatt && (await device.gatt.connect()).disconnect();
+        if (device.gatt) (await device.gatt.connect()).disconnect();
       } catch {
         /* already disconnected */
       }
