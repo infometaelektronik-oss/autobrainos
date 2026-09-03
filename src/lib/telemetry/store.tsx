@@ -75,14 +75,62 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 export const HIDDEN_FEATURES: HiddenFeature[] = [
-  { id: "needleSweep", label: "Gösterge Selamlaması (Needle Sweep)", description: "Kontak açıldığında ibreler tam tur atar.", minTrim: "B", enabled: false },
-  { id: "americanPark", label: "Amerikan Park Işıkları", description: "Sinyal kolu ile tek taraflı park lambası.", minTrim: "B", enabled: false },
-  { id: "autoLock", label: "Hıza Duyarlı Otomatik Kilit", description: "15 km/h üzerinde kapılar otomatik kilitlenir.", minTrim: "C", enabled: false },
-  { id: "comingHome", label: "Coming / Leaving Home", description: "Kontak kapandıktan sonra farlar 30 sn açık kalır.", minTrim: "C", enabled: false },
-  { id: "corneringLight", label: "Viraj Aydınlatması", description: "Direksiyon açısına göre sis farı devreye girer.", minTrim: "D", enabled: false },
-  { id: "digitalSpeed", label: "Kombine Dijital Hız Göstergesi", description: "Gösterge panelinde dijital hız değeri.", minTrim: "A", enabled: false },
-  { id: "seatbeltChime", label: "Emniyet Kemeri Uyarı Sesi Kapatma", description: "Gong sesini devre dışı bırakır.", minTrim: "A", enabled: false },
-  { id: "fanRunOn", label: "Turbo Soğutma Fanı Devamı", description: "Kontak sonrası fan turboyu soğutmaya devam eder.", minTrim: "C", enabled: false },
+  {
+    id: "needleSweep",
+    label: "Gösterge Selamlaması (Needle Sweep)",
+    description: "Kontak açıldığında ibreler tam tur atar.",
+    minTrim: "B",
+    enabled: false,
+  },
+  {
+    id: "americanPark",
+    label: "Amerikan Park Işıkları",
+    description: "Sinyal kolu ile tek taraflı park lambası.",
+    minTrim: "B",
+    enabled: false,
+  },
+  {
+    id: "autoLock",
+    label: "Hıza Duyarlı Otomatik Kilit",
+    description: "15 km/h üzerinde kapılar otomatik kilitlenir.",
+    minTrim: "C",
+    enabled: false,
+  },
+  {
+    id: "comingHome",
+    label: "Coming / Leaving Home",
+    description: "Kontak kapandıktan sonra farlar 30 sn açık kalır.",
+    minTrim: "C",
+    enabled: false,
+  },
+  {
+    id: "corneringLight",
+    label: "Viraj Aydınlatması",
+    description: "Direksiyon açısına göre sis farı devreye girer.",
+    minTrim: "D",
+    enabled: false,
+  },
+  {
+    id: "digitalSpeed",
+    label: "Kombine Dijital Hız Göstergesi",
+    description: "Gösterge panelinde dijital hız değeri.",
+    minTrim: "A",
+    enabled: false,
+  },
+  {
+    id: "seatbeltChime",
+    label: "Emniyet Kemeri Uyarı Sesi Kapatma",
+    description: "Gong sesini devre dışı bırakır.",
+    minTrim: "A",
+    enabled: false,
+  },
+  {
+    id: "fanRunOn",
+    label: "Turbo Soğutma Fanı Devamı",
+    description: "Kontak sonrası fan turboyu soğutmaya devam eder.",
+    minTrim: "C",
+    enabled: false,
+  },
 ];
 
 export interface Track {
@@ -93,10 +141,30 @@ export interface Track {
 }
 
 export const DEMO_TRACKS: Track[] = [
-  { title: "Night Drive", artist: "Sürüş Modu", duration: 214, art: "from-cyan-500/40 to-blue-900/60" },
-  { title: "Anadolu Yolu", artist: "Kokpit FM", duration: 189, art: "from-amber-500/40 to-red-900/60" },
-  { title: "Turbo Spool", artist: "Telemetry Sessions", duration: 247, art: "from-emerald-500/40 to-slate-900/60" },
-  { title: "Asfalt", artist: "AutoBrain", duration: 202, art: "from-fuchsia-500/40 to-indigo-900/60" },
+  {
+    title: "Night Drive",
+    artist: "Sürüş Modu",
+    duration: 214,
+    art: "from-cyan-500/40 to-blue-900/60",
+  },
+  {
+    title: "Anadolu Yolu",
+    artist: "Kokpit FM",
+    duration: 189,
+    art: "from-amber-500/40 to-red-900/60",
+  },
+  {
+    title: "Turbo Spool",
+    artist: "Telemetry Sessions",
+    duration: 247,
+    art: "from-emerald-500/40 to-slate-900/60",
+  },
+  {
+    title: "Asfalt",
+    artist: "AutoBrain",
+    duration: 202,
+    art: "from-fuchsia-500/40 to-indigo-900/60",
+  },
 ];
 
 interface TelemetryContextValue {

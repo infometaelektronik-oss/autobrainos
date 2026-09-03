@@ -16,7 +16,10 @@ export const Route = createFileRoute("/coding")({
           "Donanım paketine göre güvenli fabrika gizli özelliklerini görüntüleyin: gösterge selamlaması, amerikan park, hıza duyarlı kilit.",
       },
       { property: "og:title", content: "ECU Kodlama Modülü — AutoBrain OS" },
-      { property: "og:description", content: "Fabrika gizli özellik anahtarları ve trim bazlı kodlama matrisi." },
+      {
+        property: "og:description",
+        content: "Fabrika gizli özellik anahtarları ve trim bazlı kodlama matrisi.",
+      },
     ],
   }),
   component: CodingPage,
@@ -41,8 +44,9 @@ function CodingPage() {
           </p>
           <p className="mt-2 flex items-start gap-2 text-xs text-warn">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            Yalnızca geri alınabilir, güvenli fabrika adaptasyonları listelenir. Anahtarlar burada hazırlanır;
-            tarayıcı ECU'ya yazma yapamaz — kodlama, kiosk paketindeki native köprü ile uygulanır.
+            Yalnızca geri alınabilir, güvenli fabrika adaptasyonları listelenir. Anahtarlar burada
+            hazırlanır; tarayıcı ECU'ya yazma yapamaz — kodlama, kiosk paketindeki native köprü ile
+            uygulanır.
           </p>
         </header>
 
@@ -53,7 +57,10 @@ function CodingPage() {
             return (
               <article
                 key={feature.id}
-                className={cn("panel grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-4", locked && "opacity-50")}
+                className={cn(
+                  "panel grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-4",
+                  locked && "opacity-50",
+                )}
               >
                 <div className="min-w-0">
                   <h2 className="truncate font-semibold">{feature.label}</h2>

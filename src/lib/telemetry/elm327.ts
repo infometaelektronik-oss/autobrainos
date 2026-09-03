@@ -34,8 +34,8 @@ const DECODERS: Record<string, (b: number[]) => number> = {
   "012F": (b) => ((b[0] ?? 0) * 100) / 255,
   "010E": (b) => (b[0] ?? 0) / 2 - 64,
   "0142": (b) => ((b[0] ?? 0) * 256 + (b[1] ?? 0)) / 1000,
-  "013C": (b) => (((b[0] ?? 0) * 256 + (b[1] ?? 0)) / 10) - 40,
-  "0178": (b) => (((b[0] ?? 0) * 256 + (b[1] ?? 0)) / 10) - 40,
+  "013C": (b) => ((b[0] ?? 0) * 256 + (b[1] ?? 0)) / 10 - 40,
+  "0178": (b) => ((b[0] ?? 0) * 256 + (b[1] ?? 0)) / 10 - 40,
 };
 
 export const POLL_PIDS = Object.keys(DECODERS);
@@ -113,7 +113,10 @@ export class Elm327Client {
   /** OBD mode 09 PID 02 — Vehicle Identification Number. */
   async readVin(): Promise<string | null> {
     const raw = (await this.cmd("0902", 4000)).toUpperCase();
-    const tokens = raw.replace(/[\r\n>]/g, " ").split(/\s+/).filter((t) => /^[0-9A-F]{2}$/.test(t));
+    const tokens = raw
+      .replace(/[\r\n>]/g, " ")
+      .split(/\s+/)
+      .filter((t) => /^[0-9A-F]{2}$/.test(t));
     const chars: string[] = [];
     for (const token of tokens) {
       const code = parseInt(token, 16);
@@ -139,7 +142,9 @@ export class Elm327Client {
       }
       const decoder = DECODERS[pid];
       const value = decoder ? decoder(bytes) : NaN;
-      signals[key] = plausible(key, value) ? { value, status: "live" } : { value: NaN, status: "stale" };
+      signals[key] = plausible(key, value)
+        ? { value, status: "live" }
+        : { value: NaN, status: "stale" };
     }
     // derive values the standard PID set does not expose directly
     const map = signals.map;

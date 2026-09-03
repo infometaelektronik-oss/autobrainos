@@ -13,7 +13,8 @@ const OPTIONS: Array<{
   {
     mode: "usb",
     title: "USB Kablo (Birincil)",
-    description: "OTG kablo ile FTDI / STN / CH340 / CP2102 arayüzüne doğrudan, sıfır gecikmeli seri bağlantı.",
+    description:
+      "OTG kablo ile FTDI / STN / CH340 / CP2102 arayüzüne doğrudan, sıfır gecikmeli seri bağlantı.",
     icon: Usb,
   },
   {
@@ -38,8 +39,16 @@ const TRIMS: Array<{ trim: TrimLevel; label: string }> = [
 ];
 
 export function SourceModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { source, connection, connectionError, connect, disconnect, capabilities, identity, setTrim } =
-    useTelemetry();
+  const {
+    source,
+    connection,
+    connectionError,
+    connect,
+    disconnect,
+    capabilities,
+    identity,
+    setTrim,
+  } = useTelemetry();
 
   if (!open) return null;
   const busy = connection === "connecting" || connection === "handshaking";
@@ -85,7 +94,9 @@ export function SourceModal({ open, onClose }: { open: boolean; onClose: () => v
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold">{option.title}</span>
-                    {active && <span className="text-[10px] uppercase tracking-widest text-ok">bağlı</span>}
+                    {active && (
+                      <span className="text-[10px] uppercase tracking-widest text-ok">bağlı</span>
+                    )}
                     {unavailable && (
                       <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                         tarayıcı desteklemiyor
@@ -102,7 +113,9 @@ export function SourceModal({ open, onClose }: { open: boolean; onClose: () => v
         {busy && (
           <p className="mt-3 flex items-center gap-2 text-sm text-primary">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {connection === "connecting" ? "Arayüz açılıyor…" : "ELM327 el sıkışması ve PID taraması…"}
+            {connection === "connecting"
+              ? "Arayüz açılıyor…"
+              : "ELM327 el sıkışması ve PID taraması…"}
           </p>
         )}
         {connectionError && <p className="mt-3 text-sm text-destructive">{connectionError}</p>}
@@ -126,8 +139,8 @@ export function SourceModal({ open, onClose }: { open: boolean; onClose: () => v
             ))}
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Düşük paketlerde bulunmayan sensörler (yağ sıcaklığı, balata aşınması, EGT…) otomatik olarak devre
-            dışı bırakılır; bozuk 0 / 255 verisi gösterilmez.
+            Düşük paketlerde bulunmayan sensörler (yağ sıcaklığı, balata aşınması, EGT…) otomatik
+            olarak devre dışı bırakılır; bozuk 0 / 255 verisi gösterilmez.
           </p>
         </div>
 

@@ -1,4 +1,13 @@
-import { BatteryWarning, Flame, PhoneIncoming, Radio, Thermometer, Wind, Droplets, Zap } from "lucide-react";
+import {
+  BatteryWarning,
+  Flame,
+  PhoneIncoming,
+  Radio,
+  Thermometer,
+  Wind,
+  Droplets,
+  Zap,
+} from "lucide-react";
 
 import { useTelemetry } from "@/lib/telemetry/store";
 import type { FaultKey } from "@/lib/telemetry/types";
@@ -46,7 +55,9 @@ export function DemoPanel() {
               disabled={source !== "demo"}
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-3 py-3 text-left text-sm transition-colors",
-                active ? "border-destructive/70 bg-destructive/15 text-destructive" : "border-border bg-muted/40",
+                active
+                  ? "border-destructive/70 bg-destructive/15 text-destructive"
+                  : "border-border bg-muted/40",
                 source !== "demo" && "opacity-40",
               )}
             >
@@ -65,7 +76,8 @@ export function DemoPanel() {
       </div>
       {source !== "demo" && (
         <p className="mt-3 text-xs text-muted-foreground">
-          Arıza tetikleyicileri yalnızca demo modunda çalışır; canlı araç bağlantısında gerçek veriler okunur.
+          Arıza tetikleyicileri yalnızca demo modunda çalışır; canlı araç bağlantısında gerçek
+          veriler okunur.
         </p>
       )}
     </section>

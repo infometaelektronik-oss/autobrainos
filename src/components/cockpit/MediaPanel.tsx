@@ -73,7 +73,9 @@ export function MediaPanel() {
             ♪
           </div>
           <div className="min-w-0">
-            <span className="label-xs">{media.ducked ? "Ducking · ses kısıldı" : "Bluetooth / USB Medya"}</span>
+            <span className="label-xs">
+              {media.ducked ? "Ducking · ses kısıldı" : "Bluetooth / USB Medya"}
+            </span>
             <h3 className="truncate text-lg font-bold">{media.track.title}</h3>
             <p className="truncate text-sm text-muted-foreground">{media.track.artist}</p>
           </div>
@@ -97,7 +99,11 @@ export function MediaPanel() {
         </div>
 
         <div className="mt-4 grid grid-cols-4 gap-2">
-          <button onClick={media.prev} aria-label="Önceki parça" className="grid h-14 place-items-center rounded-xl bg-muted">
+          <button
+            onClick={media.prev}
+            aria-label="Önceki parça"
+            className="grid h-14 place-items-center rounded-xl bg-muted"
+          >
             <SkipBack className="h-6 w-6" />
           </button>
           <button
@@ -107,7 +113,11 @@ export function MediaPanel() {
           >
             {media.playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
           </button>
-          <button onClick={media.next} aria-label="Sonraki parça" className="grid h-14 place-items-center rounded-xl bg-muted">
+          <button
+            onClick={media.next}
+            aria-label="Sonraki parça"
+            className="grid h-14 place-items-center rounded-xl bg-muted"
+          >
             <SkipForward className="h-6 w-6" />
           </button>
           <button
@@ -140,7 +150,9 @@ export function MediaPanel() {
           }}
           className={cn(
             "mt-3 flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-3 text-sm",
-            micOn ? "border-ok/60 bg-ok/10 text-ok" : "border-border bg-muted/40 text-muted-foreground",
+            micOn
+              ? "border-ok/60 bg-ok/10 text-ok"
+              : "border-border bg-muted/40 text-muted-foreground",
           )}
         >
           <span className="flex min-w-0 items-center gap-2">
@@ -148,7 +160,10 @@ export function MediaPanel() {
             <span className="truncate">Harici mikrofon · AEC + gürültü filtresi</span>
           </span>
           <span className="flex h-3 w-16 shrink-0 overflow-hidden rounded-full bg-muted">
-            <span className="h-full bg-ok transition-[width]" style={{ width: `${Math.min(100, micLevel * 260)}%` }} />
+            <span
+              className="h-full bg-ok transition-[width]"
+              style={{ width: `${Math.min(100, micLevel * 260)}%` }}
+            />
           </span>
         </button>
         {micError && <p className="mt-2 text-xs text-destructive">{micError}</p>}
@@ -168,10 +183,14 @@ export function MediaPanel() {
             <div className="min-w-0">
               <p className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Navigation className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate">Çevrimdışı / çevrimiçi harita katmanı bu konteynere gömülür.</span>
+                <span className="truncate">
+                  Çevrimdışı / çevrimiçi harita katmanı bu konteynere gömülür.
+                </span>
               </p>
               <p className="digits mt-2 text-2xl">
-                {snapshot.signals.speed.status === "live" ? snapshot.signals.speed.value.toFixed(0) : "—"}
+                {snapshot.signals.speed.status === "live"
+                  ? snapshot.signals.speed.value.toFixed(0)
+                  : "—"}
                 <span className="ml-1 text-xs text-muted-foreground">km/h</span>
               </p>
             </div>

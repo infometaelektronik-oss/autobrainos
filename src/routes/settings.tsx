@@ -14,17 +14,25 @@ export const Route = createFileRoute("/settings")({
       { title: "Ayarlar ve Tema Motoru — AutoBrain OS" },
       {
         name: "description",
-        content: "Gösterge teması, birincil sensör seçimi, direksiyon kumandası eşlemesi ve mikrofon ayarları.",
+        content:
+          "Gösterge teması, birincil sensör seçimi, direksiyon kumandası eşlemesi ve mikrofon ayarları.",
       },
       { property: "og:title", content: "Ayarlar ve Tema Motoru — AutoBrain OS" },
-      { property: "og:description", content: "AutoBrain OS kokpit tema motoru ve donanım eşleme ayarları." },
+      {
+        property: "og:description",
+        content: "AutoBrain OS kokpit tema motoru ve donanım eşleme ayarları.",
+      },
     ],
   }),
   component: SettingsPage,
 });
 
 const THEMES: Array<{ key: ThemeKey; label: string; description: string }> = [
-  { key: "tesla", label: "Tesla Minimal", description: "İnce halka göstergeler, maksimum okunabilirlik." },
+  {
+    key: "tesla",
+    label: "Tesla Minimal",
+    description: "İnce halka göstergeler, maksimum okunabilirlik.",
+  },
   { key: "analog", label: "Klasik Analog", description: "İbreli göstergeler ve kademe çizgileri." },
   { key: "race", label: "Yarış Telemetri", description: "Yoğun ızgara, yeşil telemetri vurgusu." },
 ];
@@ -75,7 +83,8 @@ function SettingsPage() {
           <span className="label-xs">Sistem</span>
           <h1 className="mt-1 text-2xl font-bold">Ayarlar</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tema motoru, birincil göstergeler, direksiyon Bluetooth kumandası ve mikrofon yönlendirmesi.
+            Tema motoru, birincil göstergeler, direksiyon Bluetooth kumandası ve mikrofon
+            yönlendirmesi.
           </p>
         </header>
 
@@ -88,7 +97,9 @@ function SettingsPage() {
                 onClick={() => updateSettings({ theme: theme.key })}
                 className={cn(
                   "rounded-xl border p-4 text-left",
-                  settings.theme === theme.key ? "border-primary bg-primary/10" : "border-border bg-muted/40",
+                  settings.theme === theme.key
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-muted/40",
                 )}
               >
                 <div className="font-semibold">{theme.label}</div>
@@ -101,7 +112,9 @@ function SettingsPage() {
         <section className="panel p-4">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
             <span className="label-xs truncate">Birincil Kokpit Göstergeleri (4 adet)</span>
-            <span className="digits shrink-0 text-sm text-primary">{settings.primaryGauges.length}/4</span>
+            <span className="digits shrink-0 text-sm text-primary">
+              {settings.primaryGauges.length}/4
+            </span>
           </div>
           <div className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4">
             {SIGNAL_KEYS.map((key) => {
@@ -112,7 +125,9 @@ function SettingsPage() {
                   onClick={() => toggleGauge(key)}
                   className={cn(
                     "truncate rounded-lg border px-3 py-2 text-left text-xs",
-                    active ? "border-primary bg-primary/15 text-primary" : "border-border bg-muted/40",
+                    active
+                      ? "border-primary bg-primary/15 text-primary"
+                      : "border-border bg-muted/40",
                   )}
                 >
                   {SIGNAL_META[key].short ?? SIGNAL_META[key].label}
@@ -125,7 +140,8 @@ function SettingsPage() {
         <section className="panel p-4">
           <span className="label-xs">Direksiyon Bluetooth Kumanda Eşlemesi</span>
           <p className="mt-1 text-xs text-muted-foreground">
-            Bir işleve dokunun, ardından kumanda tuşuna basın. Kumanda ringleri HID tuş kodu gönderir.
+            Bir işleve dokunun, ardından kumanda tuşuna basın. Kumanda ringleri HID tuş kodu
+            gönderir.
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {RING_KEYS.map((item) => (
@@ -134,7 +150,9 @@ function SettingsPage() {
                 onClick={() => setCapturing(item.key)}
                 className={cn(
                   "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-3 py-3 text-left text-sm",
-                  capturing === item.key ? "border-primary bg-primary/10" : "border-border bg-muted/40",
+                  capturing === item.key
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-muted/40",
                 )}
               >
                 <span className="truncate">{item.label}</span>
@@ -178,8 +196,8 @@ function SettingsPage() {
             />
           </label>
           <p className="mt-3 text-xs text-muted-foreground">
-            Çıkış sesi 3.5mm AUX / DAC hattı üzerinden aracın teybine veya amfisine verilir. Hat izolasyonu
-            sayesinde ECU / BCM tarafına voltaj sıçraması gitmez.
+            Çıkış sesi 3.5mm AUX / DAC hattı üzerinden aracın teybine veya amfisine verilir. Hat
+            izolasyonu sayesinde ECU / BCM tarafına voltaj sıçraması gitmez.
           </p>
         </section>
       </div>
