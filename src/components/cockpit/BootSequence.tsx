@@ -60,9 +60,7 @@ export function BootSequence({ children }: { children: ReactNode }) {
             setSpeaking(true);
           }, i * 2600),
         );
-        timers.current.push(
-          window.setTimeout(() => setSpeaking(false), i * 2600 + 2200),
-        );
+        timers.current.push(window.setTimeout(() => setSpeaking(false), i * 2600 + 2200));
       });
       timers.current.push(window.setTimeout(finish, LINES.length * 2600 + 400));
       return;
@@ -91,10 +89,12 @@ export function BootSequence({ children }: { children: ReactNode }) {
       synth.speak(utter);
     });
     // Güvenlik ağı: konuşma hiç başlamazsa da dashboard'a geç.
-    timers.current.push(window.setTimeout(() => {
-      if (synth.speaking || synth.pending) return;
-      finish();
-    }, 22000));
+    timers.current.push(
+      window.setTimeout(() => {
+        if (synth.speaking || synth.pending) return;
+        finish();
+      }, 22000),
+    );
   }, [finish]);
 
   const start = useCallback(() => {
