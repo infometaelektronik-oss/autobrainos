@@ -175,3 +175,48 @@
 @utility sweep {
   animation: ab-sweep 2.4s linear infinite;
 }
+
+@keyframes ab-boot-pulse {
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.14);
+  }
+}
+
+@keyframes ab-boot-spin {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes ab-boot-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes ab-boot-react {
+  0%,
+  100% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.24);
+    opacity: 0.82;
+  }
+}
