@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { BootSequence } from "@/components/cockpit/BootSequence";
 import { TelemetryProvider } from "@/lib/telemetry/store";
 
 function NotFoundComponent() {
