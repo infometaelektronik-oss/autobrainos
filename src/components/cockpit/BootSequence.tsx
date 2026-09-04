@@ -116,9 +116,10 @@ export function BootSequence({ children }: { children: ReactNode }) {
         <div className="relative flex h-full flex-col items-center justify-center gap-8 px-6">
           <button
             onClick={start}
-            className="group relative grid h-44 w-44 place-items-center rounded-full border-2 border-destructive text-destructive [animation:ab-boot-pulse_1.4s_ease-in-out_infinite] [box-shadow:0_0_60px_-10px_var(--destructive),inset_0_0_40px_-18px_var(--destructive)]"
+            className="group relative grid h-44 w-44 place-items-center rounded-full border-2 border-destructive text-destructive [box-shadow:0_0_60px_-10px_var(--destructive),inset_0_0_40px_-18px_var(--destructive)]"
             aria-label="Engine Start"
           >
+            <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-destructive [animation:ab-boot-pulse_1.4s_ease-in-out_infinite]" />
             <Power className="h-9 w-9" />
             <span className="mt-2 font-display text-sm font-bold tracking-[0.22em] absolute bottom-12">
               ENGINE
