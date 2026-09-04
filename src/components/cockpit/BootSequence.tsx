@@ -172,10 +172,10 @@ function AICore({ speaking }: { speaking: boolean }) {
           style={{
             width: ring.size,
             height: ring.size,
-            borderColor: `color-mix(in oklab, ${tone} ${70 - i * 12}%, transparent)`,
+            borderColor: `color-mix(in oklab, ${tone} ${88 - i * 10}%, transparent)`,
             transform: `rotateX(${ring.rx}deg)`,
             animation: `ab-boot-spin ${ring.dur} linear infinite ${ring.dir}`,
-            boxShadow: `0 0 26px -8px ${tone}`,
+            boxShadow: `0 0 30px -4px ${tone}`,
             transition: "border-color 300ms ease",
           }}
         />
@@ -184,7 +184,7 @@ function AICore({ speaking }: { speaking: boolean }) {
         className="h-20 w-20 rounded-full sm:h-24 sm:w-24"
         style={{
           background: `radial-gradient(circle at 40% 35%, color-mix(in oklab, ${tone} 92%, white), ${tone} 55%, transparent 78%)`,
-          boxShadow: `0 0 70px -6px ${tone}`,
+          boxShadow: `0 0 80px 0px ${tone}`,
           animation: speaking
             ? "ab-boot-react 0.32s ease-in-out infinite"
             : "ab-boot-breathe 3s ease-in-out infinite",
