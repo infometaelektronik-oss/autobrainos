@@ -25,7 +25,7 @@ export interface Insight {
   title: string;
   /** Doğal dilde yorum — ham veri değil. */
   message: string;
-  action?: string;
+  action?: string | undefined;
 }
 
 const num = (snapshot: TelemetrySnapshot, key: keyof TelemetrySnapshot["signals"]) => {
@@ -111,7 +111,7 @@ export function buildInsights(
       severity: message.severity === "critical" ? "critical" : message.severity,
       title: "Arıza Yorumu",
       message: message.text.replace(/^[^\p{L}\d]+/u, ""),
-      action: message.detail,
+      ...(message.detail ? { action: message.detail } : {}),
     });
   }
 
@@ -138,8 +138,8 @@ export interface CommandResult {
     | "navigation"
     | "diagnostics"
     | "unknown";
-  climateTarget?: number;
-  mediaAction?: "play" | "pause" | "next" | "prev";
+  climateTarget?: number | undefined;
+  mediaAction?: "play" | "pause" | "next" | "prev" | undefined;
 }
 
 /** Sesli/yazılı doğal dil komutlarını yorumlar (Türkçe). */
