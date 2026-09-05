@@ -35,10 +35,15 @@ export function AICopilot() {
   const handleRef = useRef<RecognitionHandle | null>(null);
   const announcedRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => subscribeSpeech((next, text) => {
-    setSpeaking(next);
-    setCaption(next ? text : "");
-  }), []);
+  useEffect(() => {
+    const unsubscribe = subscribeSpeech((next, text) => {
+      setSpeaking(next);
+      setCaption(next ? text : "");
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const insights = useMemo(() => buildInsights(snapshot, diagnostics), [snapshot, diagnostics]);
   const mode = driveModeOf(snapshot);
