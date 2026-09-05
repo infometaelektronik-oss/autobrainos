@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
 import { AIBar } from "./AIBar";
+import { AICopilot } from "./AICopilot";
 import { CallOverlay, CriticalOverlay } from "./Overlays";
 import { SourceModal } from "./SourceModal";
 import { StatusBar } from "./StatusBar";
@@ -40,11 +41,12 @@ export function CockpitShell({ children, nav = true }: { children: ReactNode; na
           ))}
         </nav>
       )}
-      <main className="min-h-0 flex-1">{children}</main>
+      <main className="min-h-0 flex-1 pb-24">{children}</main>
       <AIBar />
       <SourceModal open={sourceOpen} onClose={() => setSourceOpen(false)} />
       <CallOverlay />
       <CriticalOverlay />
+      <AICopilot />
     </div>
   );
 }
