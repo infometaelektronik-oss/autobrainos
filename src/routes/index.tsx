@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Activity, CircleDot } from "lucide-react";
 
+import { AIAnalysisPanel } from "@/components/cockpit/AIAnalysisPanel";
 import { DemoPanel } from "@/components/cockpit/DemoPanel";
 import { Gauge } from "@/components/cockpit/Gauge";
 import { MediaPanel } from "@/components/cockpit/MediaPanel";
 import { CockpitShell } from "@/components/cockpit/Shell";
 import { SignalTile } from "@/components/cockpit/SignalTile";
+import { driveModeOf, DRIVE_MODE_LABEL } from "@/lib/ai/copilot";
 import { SIGNAL_META } from "@/lib/telemetry/signals";
 import { useTelemetry } from "@/lib/telemetry/store";
 import type { SignalKey } from "@/lib/telemetry/signals";
@@ -48,16 +50,27 @@ const SECONDARY: SignalKey[] = [
 function Cockpit() {
   const { snapshot, settings, identity } = useTelemetry();
   const variant = settings.theme;
-  const gauges = settings.primaryGauges.slice(0, 4);
+  const mode = driveModeOf(snapshot);
+  const highway = mode === "highway";
+  const park = mode === "park";
+  const gauges = highway
+    ? (["speed", "rpm"] as SignalKey[])
+    : settings.primaryGauges.slice(0, 4);
 
   return (
     <CockpitShell>
-      <div className="grid min-h-0 gap-2 sm:gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+      <div
+        className={
+          highway
+            ? "flex min-h-0 flex-col gap-2 sm:gap-3"
+            : "grid min-h-0 gap-2 sm:gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+        }
+      >
         <div className="flex min-w-0 flex-col gap-2 sm:gap-3">
           <div
             className={
-              variant === "race"
-                ? "grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4"
+              highway
+                ? "grid grid-cols-2 gap-2 sm:gap-3"
                 : "grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4"
             }
           >
@@ -72,37 +85,112 @@ function Cockpit() {
             ))}
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
-            <GForcePad />
-            <WheelPad />
-            <section className="panel p-4">
-              <span className="label-xs">Araç Kimliği</span>
-              <h3 className="mt-1 truncate text-lg font-bold">
-                {identity.make} {identity.model}
-              </h3>
-              <dl className="mt-3 space-y-1.5 text-xs">
-                <Row label="VIN" value={identity.vin ?? "okunmadı"} />
-                <Row label="Model Yılı" value={identity.year ? String(identity.year) : "—"} />
-                <Row label="Motor Kodu" value={identity.engineCode} />
-                <Row label="Protokol" value={identity.protocol} />
-                <Row label="Donanım Paketi" value={`Paket ${identity.trim}`} />
-                <Row label="Rejenerasyon" value={snapshot.flags.regen} />
-              </dl>
-            </section>
-          </div>
+          {highway ? (
+            <>
+              <section className="panel grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
+                <FocusStat label="Mod" value={DRIVE_MODE_LABEL[mode]} />
+                <FocusStat
+                  label="Şerit Takibi"
+                  value={snapshot.flags.absActive ? "Müdahale" : "Stabil"}
+                />
+                <FocusStat
+                  label="Hararet"
+                  value={
+                    snapshot.signals.coolant.status === "live"
+                      ? `${snapshot.signals.coolant.value.toFixed(0)} °C`
+                      : "—"
+                  }
+                />
+                <FocusStat
+                  label="Akü"
+                  value={
+                    snapshot.signals.voltage.status === "live"
+                      ? `${snapshot.signals.voltage.value.toFixed(1)} V`
+                      : "—"
+                  }
+                />
+              </section>
+              <AIAnalysisPanel compact />
+            </>
+          ) : (
+            <>
+              <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
+                <GForcePad />
+                <WheelPad />
+                <section className="panel p-4">
+                  <span className="label-xs">Araç Kimliği</span>
+                  <h3 className="mt-1 truncate text-lg font-bold">
+                    {identity.make} {identity.model}
+                  </h3>
+                  <dl className="mt-3 space-y-1.5 text-xs">
+                    <Row label="VIN" value={identity.vin ?? "okunmadı"} />
+                    <Row label="Model Yılı" value={identity.year ? String(identity.year) : "—"} />
+                    <Row label="Motor Kodu" value={identity.engineCode} />
+                    <Row label="Protokol" value={identity.protocol} />
+                    <Row label="Donanım Paketi" value={`Paket ${identity.trim}`} />
+                    <Row label="Rejenerasyon" value={snapshot.flags.regen} />
+                  </dl>
+                </section>
+              </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
-            {SECONDARY.map((key) => (
-              <SignalTile key={key} signalKey={key} signal={snapshot.signals[key]} compact />
-            ))}
-          </div>
+              <AIAnalysisPanel />
 
-          <DemoPanel />
+              {park && <ParkSummary />}
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+                {SECONDARY.map((key) => (
+                  <SignalTile key={key} signalKey={key} signal={snapshot.signals[key]} compact />
+                ))}
+              </div>
+
+              <DemoPanel />
+            </>
+          )}
         </div>
 
-        <MediaPanel />
+        {!highway && <MediaPanel />}
       </div>
     </CockpitShell>
+  );
+}
+
+function FocusStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="label-xs truncate">{label}</div>
+      <div className="digits truncate text-xl">{value}</div>
+    </div>
+  );
+}
+
+/** Park modunda öne çıkan yolculuk özeti, komponent sıcaklıkları ve verimlilik. */
+function ParkSummary() {
+  const { snapshot, activeTrip, trips } = useTelemetry();
+  const trip = activeTrip ?? trips[0] ?? null;
+  const sig = (key: SignalKey) => {
+    const s = snapshot.signals[key];
+    return s.status === "live" || s.status === "calculated"
+      ? `${s.value.toFixed(1)} ${SIGNAL_META[key].unit}`
+      : "—";
+  };
+
+  return (
+    <section aria-label="Park modu yolculuk özeti" className="panel p-4">
+      <span className="label-xs">Park Modu · Yolculuk Özeti</span>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <FocusStat
+          label="Süre"
+          value={trip ? `${Math.round((trip.samples?.length ?? 0) / 60)} dk` : "—"}
+        />
+        <FocusStat label="Ortalama Tüketim" value={sig("fuelRate")} />
+        <FocusStat label="Yakıt Seviyesi" value={sig("fuelLevel")} />
+        <FocusStat label="Akü Voltajı" value={sig("voltage")} />
+        <FocusStat label="Motor Yağı" value={sig("oilTemp")} />
+        <FocusStat label="Soğutma Suyu" value={sig("coolant")} />
+        <FocusStat label="Egzoz Gazı" value={sig("egt")} />
+        <FocusStat label="Emme Havası" value={sig("iat")} />
+      </div>
+    </section>
   );
 }
 
