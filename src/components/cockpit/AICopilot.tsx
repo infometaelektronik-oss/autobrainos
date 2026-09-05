@@ -90,7 +90,10 @@ export function AICopilot() {
       else if (result.mediaAction === "prev") media.prev();
       else if (result.mediaAction === "play" && !media.playing) media.toggle();
       else if (result.mediaAction === "pause" && media.playing) media.toggle();
-      setLog((prev) => [...prev.slice(-8), { id: `a-${Date.now()}`, role: "ai", text: result.reply }]);
+      setLog((prev) => [
+        ...prev.slice(-8),
+        { id: `a-${Date.now()}`, role: "ai", text: result.reply },
+      ]);
       say(result.reply);
     },
     [media, say, snapshot],

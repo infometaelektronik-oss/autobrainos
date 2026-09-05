@@ -53,9 +53,7 @@ function Cockpit() {
   const mode = driveModeOf(snapshot);
   const highway = mode === "highway";
   const park = mode === "park";
-  const gauges = highway
-    ? (["speed", "rpm"] as SignalKey[])
-    : settings.primaryGauges.slice(0, 4);
+  const gauges = highway ? (["speed", "rpm"] as SignalKey[]) : settings.primaryGauges.slice(0, 4);
 
   return (
     <CockpitShell>
@@ -180,9 +178,13 @@ function ParkSummary() {
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <FocusStat
           label="Süre"
-          value={trip ? `${Math.round((trip.samples?.length ?? 0) / 60)} dk` : "—"}
+          value={
+            trip
+              ? `${Math.max(1, Math.round(((trip.endedAt ?? Date.now()) - trip.startedAt) / 60000))} dk`
+              : "—"
+          }
         />
-        <FocusStat label="Ortalama Tüketim" value={sig("fuelRate")} />
+        <FocusStat label="Enjektör Vuruşu" value={sig("injPulse")} />
         <FocusStat label="Yakıt Seviyesi" value={sig("fuelLevel")} />
         <FocusStat label="Akü Voltajı" value={sig("voltage")} />
         <FocusStat label="Motor Yağı" value={sig("oilTemp")} />

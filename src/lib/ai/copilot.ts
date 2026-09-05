@@ -130,14 +130,7 @@ export function buildInsights(
 
 export interface CommandResult {
   reply: string;
-  intent:
-    | "climate"
-    | "charging"
-    | "media"
-    | "status"
-    | "navigation"
-    | "diagnostics"
-    | "unknown";
+  intent: "climate" | "charging" | "media" | "status" | "navigation" | "diagnostics" | "unknown";
   climateTarget?: number | undefined;
   mediaAction?: "play" | "pause" | "next" | "prev" | undefined;
 }
@@ -161,7 +154,8 @@ export function interpretCommand(rawInput: string, snapshot: TelemetrySnapshot):
   if (/(şarj istasyon|şarj noktası|charge)/.test(text)) {
     return {
       intent: "charging",
-      reply: "En yakın şarj istasyonlarını haritada listeliyorum: 2,4 km mesafede 3 uygun nokta var.",
+      reply:
+        "En yakın şarj istasyonlarını haritada listeliyorum: 2,4 km mesafede 3 uygun nokta var.",
     };
   }
 
