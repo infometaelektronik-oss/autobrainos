@@ -1,4 +1,8 @@
-/** Web Speech API köprüsü: sesli anlatım (TTS) + sesli komut dinleme (STT). */
+/**
+ * Sesli anlatım (ChatGPT sesi) + sesli komut dinleme (Web Speech API).
+ * Ses sunucudaki /api/tts uç noktasından SSE ile akar ve Web Audio ile çalar.
+ * Bağlantı kurulamazsa tarayıcının yerleşik sesine düşer.
+ */
 
 type Listener = (speaking: boolean, text: string) => void;
 
@@ -19,28 +23,216 @@ function emit(next: boolean, text: string) {
 }
 
 export function speechSupported() {
-  return typeof window !== "undefined" && "speechSynthesis" in window;
+  return typeof window !== "undefined";
 }
 
-/** Türkçe sesli bildirim. */
-export function speak(text: string) {
-  if (!speechSupported()) {
-    emit(true, text);
-    window.setTimeout(() => emit(false, ""), 1800);
+/* ------------------------------------------------------------------ audio */
+
+const SAMPLE_RATE = 24000;
+/** Aynı metin (açılış cümleleri gibi) yeniden üretilmez. */
+const cache = new Map<string, Float32Array>();
+
+let ctx: AudioContext | null = null;
+let controller: AbortController | null = null;
+let sources: AudioBufferSourceNode[] = [];
+
+function audioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (!ctx) {
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
+    ctx = new Ctor({ sampleRate: SAMPLE_RATE });
+  }
+  if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+  return ctx;
+}
+
+/** İlk kullanıcı dokunuşunda çağrılır; otomatik oynatma kilidini açar. */
+export function unlockAudio() {
+  audioContext();
+}
+
+function playFloat(ac: AudioContext, floats: Float32Array, at: number) {
+  const buffer = ac.createBuffer(1, floats.length, SAMPLE_RATE);
+  buffer.copyToChannel(floats, 0);
+  const source = ac.createBufferSource();
+  source.buffer = buffer;
+  source.connect(ac.destination);
+  source.start(at);
+  sources.push(source);
+  source.onended = () => {
+    sources = sources.filter((s) => s !== source);
+  };
+  return buffer.duration;
+}
+
+function pcmToFloat(bytes: Uint8Array, carry: Uint8Array): { floats: Float32Array; rest: Uint8Array } {
+  const merged = new Uint8Array(carry.length + bytes.length);
+  merged.set(carry);
+  merged.set(bytes, carry.length);
+  const usable = merged.length - (merged.length % 2);
+  const rest = merged.slice(usable);
+  if (usable === 0) return { floats: new Float32Array(0), rest };
+  const view = new DataView(merged.buffer, merged.byteOffset, usable);
+  const floats = new Float32Array(usable / 2);
+  for (let i = 0; i < floats.length; i += 1) floats[i] = view.getInt16(i * 2, true) / 32768;
+  return { floats, rest };
+}
+
+function wait(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, Math.max(0, ms)));
+}
+
+/** Tarayıcının yerleşik sesi — yedek yol. */
+function fallbackSpeak(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      window.setTimeout(resolve, Math.min(6000, 900 + text.length * 55));
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "tr-TR";
+    utterance.rate = 0.98;
+    utterance.pitch = 1.02;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    utterance.onend = finish;
+    utterance.onerror = finish;
+    window.speechSynthesis.speak(utterance);
+    window.setTimeout(finish, 2000 + text.length * 90);
+  });
+}
+
+export interface SpeakOptions {
+  /** Açılış anlatımı için daha sinematik tonlama. */
+  style?: "assistant" | "boot";
+  /** Sabit metinleri cihazda sakla. */
+  remember?: boolean;
+}
+
+/** ChatGPT sesiyle konuşur; bitişini bekleyebilirsin. */
+export async function speakAsync(text: string, options: SpeakOptions = {}): Promise<void> {
+  const clean = text.trim();
+  if (!clean) return;
+  emit(true, clean);
+
+  const ac = audioContext();
+  if (!ac) {
+    await fallbackSpeak(clean);
+    emit(false, "");
     return;
   }
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "tr-TR";
-  utterance.rate = 1;
-  utterance.pitch = 1.02;
-  utterance.onstart = () => emit(true, text);
-  utterance.onend = () => emit(false, "");
-  utterance.onerror = () => emit(false, "");
-  window.speechSynthesis.speak(utterance);
+
+  const key = `${options.style ?? "assistant"}::${clean}`;
+  const cached = cache.get(key);
+  if (cached) {
+    const duration = playFloat(ac, cached, ac.currentTime + 0.05);
+    await wait((duration + 0.1) * 1000);
+    emit(false, "");
+    return;
+  }
+
+  controller?.abort();
+  const abort = new AbortController();
+  controller = abort;
+
+  try {
+    const response = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: clean, style: options.style ?? "assistant" }),
+      signal: abort.signal,
+    });
+    if (!response.ok || !response.body) throw new Error(`TTS ${response.status}`);
+
+    let playhead = 0;
+    let carry = new Uint8Array(0);
+    let buffered = "";
+    const collected: Float32Array[] = [];
+
+    const handleEvent = (payload: string) => {
+      let parsed: { type?: string; audio?: string };
+      try {
+        parsed = JSON.parse(payload) as typeof parsed;
+      } catch {
+        return;
+      }
+      if (parsed.type !== "speech.audio.delta" || !parsed.audio) return;
+      const binary = atob(parsed.audio);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      const { floats, rest } = pcmToFloat(bytes, carry);
+      carry = rest;
+      if (floats.length === 0) return;
+      if (options.remember) collected.push(floats);
+      const at = playhead === 0 ? ac.currentTime + 0.12 : Math.max(playhead, ac.currentTime);
+      playhead = at + playFloat(ac, floats, at);
+    };
+
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffered += value;
+      const parts = buffered.split("\n");
+      buffered = parts.pop() ?? "";
+      for (const line of parts) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("data:")) handleEvent(trimmed.slice(5).trim());
+      }
+    }
+
+    if (playhead === 0) throw new Error("Ses verisi gelmedi");
+
+    if (options.remember && collected.length > 0) {
+      const total = collected.reduce((sum, part) => sum + part.length, 0);
+      const merged = new Float32Array(total);
+      let offset = 0;
+      for (const part of collected) {
+        merged.set(part, offset);
+        offset += part.length;
+      }
+      cache.set(key, merged);
+    }
+
+    await wait((playhead - ac.currentTime + 0.15) * 1000);
+    emit(false, "");
+  } catch (error) {
+    if (abort.signal.aborted) {
+      emit(false, "");
+      return;
+    }
+    console.warn("ChatGPT sesi kullanılamadı, tarayıcı sesine düşülüyor:", error);
+    await fallbackSpeak(clean);
+    emit(false, "");
+  } finally {
+    if (controller === abort) controller = null;
+  }
+}
+
+/** Ateşle-ve-devam et: konuşmayı başlatır, beklemez. */
+export function speak(text: string, options?: SpeakOptions) {
+  void speakAsync(text, options);
 }
 
 export function cancelSpeech() {
-  if (speechSupported()) window.speechSynthesis.cancel();
+  controller?.abort();
+  controller = null;
+  for (const source of sources) {
+    try {
+      source.stop();
+    } catch {
+      /* zaten bitmiş */
+    }
+  }
+  sources = [];
+  if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
   emit(false, "");
 }
 

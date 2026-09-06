@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CodingRouteImport } from './routes/coding'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as TelemetrySectionRouteImport } from './routes/telemetry.$section'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTtsRoute = ApiTtsRouteImport.update({
+  id: '/api/tts',
+  path: '/api/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelemetrySectionRoute = TelemetrySectionRouteImport.update({
   id: '/telemetry/$section',
   path: '/telemetry/$section',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/coding': typeof CodingRoute
   '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
+  '/api/tts': typeof ApiTtsRoute
   '/telemetry/$section': typeof TelemetrySectionRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/coding': typeof CodingRoute
   '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
+  '/api/tts': typeof ApiTtsRoute
   '/telemetry/$section': typeof TelemetrySectionRoute
 }
 export interface FileRoutesById {
@@ -61,15 +69,24 @@ export interface FileRoutesById {
   '/coding': typeof CodingRoute
   '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
+  '/api/tts': typeof ApiTtsRoute
   '/telemetry/$section': typeof TelemetrySectionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/coding' | '/logs' | '/settings' | '/telemetry/$section'
+  fullPaths:
+    '/' | '/coding' | '/logs' | '/settings' | '/api/tts' | '/telemetry/$section'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/coding' | '/logs' | '/settings' | '/telemetry/$section'
+  to:
+    '/' | '/coding' | '/logs' | '/settings' | '/api/tts' | '/telemetry/$section'
   id:
-    '__root__' | '/' | '/coding' | '/logs' | '/settings' | '/telemetry/$section'
+    | '__root__'
+    | '/'
+    | '/coding'
+    | '/logs'
+    | '/settings'
+    | '/api/tts'
+    | '/telemetry/$section'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +94,7 @@ export interface RootRouteChildren {
   CodingRoute: typeof CodingRoute
   LogsRoute: typeof LogsRoute
   SettingsRoute: typeof SettingsRoute
+  ApiTtsRoute: typeof ApiTtsRoute
   TelemetrySectionRoute: typeof TelemetrySectionRoute
 }
 
@@ -110,6 +128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tts': {
+      id: '/api/tts'
+      path: '/api/tts'
+      fullPath: '/api/tts'
+      preLoaderRoute: typeof ApiTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telemetry/$section': {
       id: '/telemetry/$section'
       path: '/telemetry/$section'
@@ -125,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodingRoute: CodingRoute,
   LogsRoute: LogsRoute,
   SettingsRoute: SettingsRoute,
+  ApiTtsRoute: ApiTtsRoute,
   TelemetrySectionRoute: TelemetrySectionRoute,
 }
 export const routeTree = rootRouteImport
