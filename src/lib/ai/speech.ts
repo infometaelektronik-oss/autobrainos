@@ -54,7 +54,7 @@ export function unlockAudio() {
   audioContext();
 }
 
-function playFloat(ac: AudioContext, floats: Float32Array, at: number) {
+function playFloat(ac: AudioContext, floats: Float32Array<ArrayBuffer>, at: number) {
   const buffer = ac.createBuffer(1, floats.length, SAMPLE_RATE);
   buffer.copyToChannel(floats, 0);
   const source = ac.createBufferSource();
@@ -68,12 +68,16 @@ function playFloat(ac: AudioContext, floats: Float32Array, at: number) {
   return buffer.duration;
 }
 
-function pcmToFloat(bytes: Uint8Array, carry: Uint8Array): { floats: Float32Array; rest: Uint8Array } {
+function pcmToFloat(
+  bytes: Uint8Array<ArrayBuffer>,
+  carry: Uint8Array<ArrayBuffer>,
+): { floats: Float32Array<ArrayBuffer>; rest: Uint8Array<ArrayBuffer> } {
   const merged = new Uint8Array(carry.length + bytes.length);
   merged.set(carry);
   merged.set(bytes, carry.length);
   const usable = merged.length - (merged.length % 2);
-  const rest = merged.slice(usable);
+  const rest = new Uint8Array(merged.length - usable);
+  rest.set(merged.subarray(usable));
   if (usable === 0) return { floats: new Float32Array(0), rest };
   const view = new DataView(merged.buffer, merged.byteOffset, usable);
   const floats = new Float32Array(usable / 2);
@@ -88,8 +92,9 @@ function wait(ms: number) {
 /** Tarayıcının yerleşik sesi — yedek yol. */
 function fallbackSpeak(text: string): Promise<void> {
   return new Promise((resolve) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      window.setTimeout(resolve, Math.min(6000, 900 + text.length * 55));
+    const hasSynth = typeof window !== "undefined" && "speechSynthesis" in window;
+    if (!hasSynth) {
+      setTimeout(resolve, Math.min(6000, 900 + text.length * 55));
       return;
     }
     const utterance = new SpeechSynthesisUtterance(text);
@@ -152,7 +157,7 @@ export async function speakAsync(text: string, options: SpeakOptions = {}): Prom
     if (!response.ok || !response.body) throw new Error(`TTS ${response.status}`);
 
     let playhead = 0;
-    let carry = new Uint8Array(0);
+    let carry: Uint8Array<ArrayBuffer> = new Uint8Array(0);
     let buffered = "";
     const collected: Float32Array[] = [];
 
