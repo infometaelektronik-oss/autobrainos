@@ -30,7 +30,7 @@ export function speechSupported() {
 
 const SAMPLE_RATE = 24000;
 /** Aynı metin (açılış cümleleri gibi) yeniden üretilmez. */
-const cache = new Map<string, Float32Array>();
+const cache = new Map<string, Float32Array<ArrayBuffer>>();
 
 let ctx: AudioContext | null = null;
 let controller: AbortController | null = null;
@@ -159,7 +159,7 @@ export async function speakAsync(text: string, options: SpeakOptions = {}): Prom
     let playhead = 0;
     let carry: Uint8Array<ArrayBuffer> = new Uint8Array(0);
     let buffered = "";
-    const collected: Float32Array[] = [];
+    const collected: Float32Array<ArrayBuffer>[] = [];
 
     const handleEvent = (payload: string) => {
       let parsed: { type?: string; audio?: string };
