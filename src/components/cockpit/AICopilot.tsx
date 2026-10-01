@@ -53,8 +53,14 @@ export function AICopilot() {
       ? "warn"
       : "info";
 
+  // Otoyol/Odak modunda sesli asistan paneli kapanır, yalnız hologram kalır.
+  useEffect(() => {
+    if (mode === "highway") setOpen(false);
+  }, [mode]);
+
   const rpm = snapshot.signals.rpm.value;
   const load = Number.isFinite(rpm) ? Math.min(1, Math.max(0, rpm / 6000)) : 0;
+
 
   const say = useCallback(
     (text: string) => {
