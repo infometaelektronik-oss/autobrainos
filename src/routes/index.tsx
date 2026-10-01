@@ -5,9 +5,12 @@ import { AIAnalysisPanel } from "@/components/cockpit/AIAnalysisPanel";
 import { DemoPanel } from "@/components/cockpit/DemoPanel";
 import { Gauge } from "@/components/cockpit/Gauge";
 import { MediaPanel } from "@/components/cockpit/MediaPanel";
+import { LaneRadarPanel } from "@/components/cockpit/LaneRadarPanel";
+import { PerfPanel } from "@/components/cockpit/PerfPanel";
 import { CockpitShell } from "@/components/cockpit/Shell";
 import { SignalTile } from "@/components/cockpit/SignalTile";
 import { driveModeOf, DRIVE_MODE_LABEL } from "@/lib/ai/copilot";
+import { LANE_LABEL, useDriverAssist } from "@/lib/ai/driverAssist";
 import { SIGNAL_META } from "@/lib/telemetry/signals";
 import { useTelemetry } from "@/lib/telemetry/store";
 import type { SignalKey } from "@/lib/telemetry/signals";
@@ -49,6 +52,7 @@ const SECONDARY: SignalKey[] = [
 
 function Cockpit() {
   const { snapshot, settings, identity } = useTelemetry();
+  const assist = useDriverAssist(snapshot);
   const variant = settings.theme;
   const mode = driveModeOf(snapshot);
   const highway = mode === "highway";
@@ -87,10 +91,7 @@ function Cockpit() {
             <>
               <section className="panel grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
                 <FocusStat label="Mod" value={DRIVE_MODE_LABEL[mode]} />
-                <FocusStat
-                  label="Şerit Takibi"
-                  value={snapshot.flags.absActive ? "Müdahale" : "Stabil"}
-                />
+                <FocusStat label="Şerit Takibi" value={LANE_LABEL[assist.lane]} />
                 <FocusStat
                   label="Hararet"
                   value={
@@ -108,6 +109,7 @@ function Cockpit() {
                   }
                 />
               </section>
+              <LaneRadarPanel assist={assist} />
               <AIAnalysisPanel compact />
             </>
           ) : (
@@ -140,6 +142,10 @@ function Cockpit() {
                   <SignalTile key={key} signalKey={key} signal={snapshot.signals[key]} compact />
                 ))}
               </div>
+
+              <LaneRadarPanel assist={assist} />
+
+              <PerfPanel />
 
               <DemoPanel />
             </>

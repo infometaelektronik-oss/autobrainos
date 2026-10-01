@@ -27,7 +27,11 @@ export function LaneRadarPanel({ assist }: { assist: DriverAssist }) {
         <Radar
           className={cn(
             "h-4 w-4 shrink-0",
-            tone === "critical" ? "text-destructive" : tone === "warn" ? "text-warn" : "text-primary",
+            tone === "critical"
+              ? "text-destructive"
+              : tone === "warn"
+                ? "text-warn"
+                : "text-primary",
           )}
         />
         <span className="label-xs truncate">Radar / Şerit Takibi</span>

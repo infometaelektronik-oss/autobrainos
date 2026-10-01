@@ -121,7 +121,6 @@ export function playBootChime() {
   });
 }
 
-
 export interface MicSession {
   stop(): void;
   level(): number;
