@@ -1,27 +1,38 @@
-import { Power } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
+import { speakAsync, cancelSpeech, unlockAudio } from "@/lib/ai/speech";
+import { playBootChime } from "@/lib/audio";
+
 /**
- * J.A.R.V.I.S / MBUX tarzı açılış sekansı.
- * Aşama 1: ENGINE START butonu (autoplay kilidini açan ilk etkileşim)
- * Aşama 2: AI çekirdeği + yörünge halkaları
- * Aşama 3: Web Speech API ile Türkçe sesli selamlama + tepkisel animasyon
- * Aşama 4: Dashboard'a pürüzsüz geçiş
+ * Modern işletim sistemi açılışı:
+ * dokunuş → sinematik açılış sesi + kendini çizen AutoBrain işareti →
+ * akan sistem durum satırları → ChatGPT sesiyle karşılama → panele geçiş.
  */
 
 const LINES = [
-  "Sistem başlatılıyor. Araç donanımları taranıyor...",
-  "E.C.U bağlantısı başarılı. Sensörler aktif.",
-  "AutoBrain işletim sistemi devrede. Hoş geldin Tolga. İyi yolculuklar.",
+  "Sistem başlatılıyor. Araç donanımları taranıyor.",
+  "E.C.U bağlantısı başarılı, sensörler aktif.",
+  "AutoBrain işletim sistemi devrede. Hoş geldin Tolga, iyi yolculuklar.",
+];
+
+const STEPS = [
+  { label: "Çekirdek ve bellek", delay: 250 },
+  { label: "Güç ve enerji yönetimi", delay: 900 },
+  { label: "E.C.U / CAN-Bus veri yolu", delay: 1650 },
+  { label: "Sensör ağı ve kalibrasyon", delay: 2400 },
+  { label: "Yapay zeka teşhis motoru", delay: 3100 },
 ];
 
 const BOOT_FLAG = "autobrain:booted";
 
-type Phase = "idle" | "core" | "done";
+type Phase = "idle" | "boot" | "done";
 
 export function BootSequence({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [step, setStep] = useState(-1);
+  const [progress, setProgress] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [caption, setCaption] = useState("");
   const [fading, setFading] = useState(false);
@@ -34,7 +45,7 @@ export function BootSequence({ children }: { children: ReactNode }) {
     }
     return () => {
       timers.current.forEach((t) => window.clearTimeout(t));
-      window.speechSynthesis?.cancel();
+      cancelSpeech();
     };
   }, []);
 
@@ -45,148 +56,199 @@ export function BootSequence({ children }: { children: ReactNode }) {
     const t = window.setTimeout(() => {
       sessionStorage.setItem(BOOT_FLAG, "1");
       setPhase("done");
-    }, 900);
+    }, 850);
     timers.current.push(t);
   }, []);
 
-  const speakAll = useCallback(() => {
-    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-    if (!synth) {
-      // Sesi olmayan cihazlarda altyazıyı zamanlayarak akıt.
-      LINES.forEach((line, i) => {
-        timers.current.push(
-          window.setTimeout(() => {
-            setCaption(line);
-            setSpeaking(true);
-          }, i * 2600),
-        );
-        timers.current.push(window.setTimeout(() => setSpeaking(false), i * 2600 + 2200));
+  const narrate = useCallback(async () => {
+    for (const line of LINES) {
+      setCaption(line);
+      setSpeaking(true);
+      await speakAsync(line, { style: "boot", remember: true });
+      setSpeaking(false);
+      await new Promise<void>((resolve) => {
+        timers.current.push(window.setTimeout(resolve, 260));
       });
-      timers.current.push(window.setTimeout(finish, LINES.length * 2600 + 400));
-      return;
     }
-
-    synth.cancel();
-    LINES.forEach((line, index) => {
-      const utter = new SpeechSynthesisUtterance(line);
-      utter.lang = "tr-TR";
-      utter.rate = 0.98;
-      utter.pitch = 1.02;
-      utter.onstart = () => {
-        setCaption(line);
-        setSpeaking(true);
-      };
-      utter.onend = () => {
-        setSpeaking(false);
-        if (index === LINES.length - 1) {
-          timers.current.push(window.setTimeout(finish, 700));
-        }
-      };
-      utter.onerror = () => {
-        setSpeaking(false);
-        if (index === LINES.length - 1) finish();
-      };
-      synth.speak(utter);
-    });
-    // Güvenlik ağı: konuşma hiç başlamazsa da dashboard'a geç.
-    timers.current.push(
-      window.setTimeout(() => {
-        if (synth.speaking || synth.pending) return;
-        finish();
-      }, 22000),
-    );
+    finish();
   }, [finish]);
 
   const start = useCallback(() => {
-    setPhase("core");
-    timers.current.push(window.setTimeout(speakAll, 1400));
-  }, [speakAll]);
+    unlockAudio();
+    playBootChime();
+    setPhase("boot");
+
+    STEPS.forEach((item, index) => {
+      timers.current.push(window.setTimeout(() => setStep(index), item.delay));
+    });
+    const startedAt = Date.now();
+    const tick = window.setInterval(() => {
+      const pct = Math.min(100, ((Date.now() - startedAt) / 3800) * 100);
+      setProgress(pct);
+      if (pct >= 100) window.clearInterval(tick);
+    }, 60);
+    timers.current.push(window.setTimeout(() => void narrate(), 3900));
+  }, [narrate]);
 
   if (!mounted) return null;
-
-  if (phase === "done") {
-    return <div className="animate-fade-in">{children}</div>;
-  }
+  if (phase === "done") return <div className="animate-fade-in">{children}</div>;
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden bg-[oklch(0.06_0.01_255)]">
-      <div className="pointer-events-none absolute inset-0 opacity-70 [background:radial-gradient(circle_at_50%_45%,oklch(0.4_0.12_200/0.25),transparent_60%),radial-gradient(circle_at_50%_120%,oklch(0.4_0.16_320/0.2),transparent_55%)]" />
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-[oklch(0.05_0.012_250)] text-foreground">
+      {/* arka plan: derin ızgara + tarama dalgası */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.22] [background-image:linear-gradient(oklch(0.72_0.14_200/0.5)_1px,transparent_1px),linear-gradient(90deg,oklch(0.72_0.14_200/0.5)_1px,transparent_1px)] [background-size:46px_46px] [mask-image:radial-gradient(circle_at_50%_45%,black,transparent_72%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-70 [background:radial-gradient(circle_at_50%_40%,oklch(0.45_0.13_200/0.28),transparent_62%),radial-gradient(circle_at_50%_115%,oklch(0.45_0.17_320/0.22),transparent_58%)]" />
+      <div
+        className="pointer-events-none absolute inset-x-0 h-40 bg-[linear-gradient(to_bottom,transparent,oklch(0.8_0.14_195/0.12),transparent)]"
+        style={{ animation: "ab-boot-sweep 3.6s cubic-bezier(.4,0,.2,1) infinite" }}
+      />
 
-      {phase === "idle" && (
-        <div className="relative flex h-full flex-col items-center justify-center gap-8 px-6">
+      <div
+        className={`relative flex h-full flex-col items-center justify-center gap-7 px-6 transition-all duration-700 ${
+          fading ? "scale-[1.04] opacity-0" : "opacity-100"
+        }`}
+      >
+        <Mark active={phase === "boot"} speaking={speaking} />
+
+        <h1 className="font-display text-2xl font-bold tracking-[0.42em] text-primary sm:text-4xl">
+          AUTOBRAIN
+        </h1>
+        <p className="-mt-5 text-[10px] tracking-[0.5em] text-muted-foreground uppercase">
+          Vehicle Operating System
+        </p>
+
+        {phase === "idle" ? (
           <button
             onClick={start}
-            className="group relative grid h-44 w-44 place-items-center rounded-full border-2 border-destructive text-destructive [box-shadow:0_0_60px_-10px_var(--destructive),inset_0_0_40px_-18px_var(--destructive)]"
-            aria-label="Engine Start"
+            aria-label="Sistemi Başlat"
+            className="group relative mt-2 overflow-hidden rounded-full border border-primary/60 px-9 py-3.5 font-display text-xs font-bold tracking-[0.3em] text-primary uppercase [box-shadow:0_0_50px_-18px_var(--primary)]"
           >
-            <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-destructive [animation:ab-boot-pulse_1.4s_ease-in-out_infinite]" />
-            <Power className="h-9 w-9" />
-            <span className="mt-2 font-display text-sm font-bold tracking-[0.22em] absolute bottom-12">
-              ENGINE
-            </span>
-            <span className="font-display text-sm font-bold tracking-[0.22em] absolute bottom-6">
-              START
+            <span
+              className="pointer-events-none absolute inset-0 rounded-full border border-primary/50"
+              style={{ animation: "ab-boot-pulse 1.8s ease-in-out infinite" }}
+            />
+            <span className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              Sistemi Başlat
+              <ChevronRight className="h-4 w-4" />
             </span>
           </button>
-          <p className="max-w-xs text-center text-xs tracking-[0.18em] text-muted-foreground uppercase">
-            Sistemi başlatmak için dokunun
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="w-full max-w-sm">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-primary/15">
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-100 [box-shadow:0_0_16px_0_var(--primary)]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
 
-      {phase === "core" && (
-        <div
-          className={`relative flex h-full flex-col items-center justify-center transition-opacity duration-700 ${fading ? "opacity-0" : "opacity-100"}`}
-        >
-          <AICore speaking={speaking} />
-          <div className="mt-14 h-16 px-6 text-center">
-            <p
-              className={`font-display text-base tracking-[0.08em] transition-colors duration-300 sm:text-xl ${
-                speaking ? "text-accent" : "text-primary"
-              }`}
+            <ul className="mt-4 space-y-1.5">
+              {STEPS.map((item, index) => (
+                <li
+                  key={item.label}
+                  className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 text-xs transition-opacity duration-500 ${
+                    index <= step ? "opacity-100" : "opacity-25"
+                  }`}
+                >
+                  {index < step ? (
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  ) : (
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+                  )}
+                  <span className="truncate text-muted-foreground">{item.label}</span>
+                  <span className="font-mono text-[10px] text-primary">
+                    {index < step ? "OK" : index === step ? "…" : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6 min-h-12 text-center">
+              <p
+                className={`font-display text-sm leading-snug tracking-[0.04em] transition-colors duration-300 sm:text-base ${
+                  speaking ? "text-secondary" : "text-primary/80"
+                }`}
+              >
+                {caption}
+              </p>
+            </div>
+
+            <button
+              onClick={finish}
+              className="mx-auto mt-2 block text-[10px] tracking-[0.3em] text-muted-foreground uppercase"
             >
-              {caption}
-            </p>
+              Atla
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
-function AICore({ speaking }: { speaking: boolean }) {
-  const tone = speaking ? "var(--accent)" : "var(--primary)";
+/** Kendini çizen AutoBrain işareti; konuşurken magentaya döner ve titreşir. */
+function Mark({ active, speaking }: { active: boolean; speaking: boolean }) {
+  const tone = speaking ? "var(--secondary)" : "var(--primary)";
   return (
     <div
-      className="relative grid h-64 w-64 place-items-center sm:h-80 sm:w-80"
+      className="relative grid h-40 w-40 place-items-center sm:h-52 sm:w-52"
       style={{ color: tone, transition: "color 300ms ease" }}
     >
-      {[
-        { size: "100%", dur: "7s", dir: "normal", rx: 74 },
-        { size: "80%", dur: "5s", dir: "reverse", rx: 22 },
-        { size: "60%", dur: "3.6s", dir: "normal", rx: 58 },
-      ].map((ring, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full border-2"
+      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+        <circle
+          cx="50"
+          cy="50"
+          r="46"
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity="0.25"
+          strokeWidth="0.6"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r="46"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.1"
+          strokeLinecap="round"
+          strokeDasharray="289"
           style={{
-            width: ring.size,
-            height: ring.size,
-            borderColor: `color-mix(in oklab, ${tone} ${88 - i * 10}%, transparent)`,
-            transform: `rotateX(${ring.rx}deg)`,
-            animation: `ab-boot-spin ${ring.dur} linear infinite ${ring.dir}`,
-            boxShadow: `0 0 30px -4px ${tone}`,
-            transition: "border-color 300ms ease",
+            strokeDashoffset: active ? 0 : 289,
+            transition: "stroke-dashoffset 2.6s cubic-bezier(.22,1,.36,1)",
+          }}
+          transform="rotate(-90 50 50)"
+        />
+        <path
+          d="M50 20 L72 72 L50 60 L28 72 Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+          strokeDasharray="190"
+          style={{
+            strokeDashoffset: active ? 0 : 190,
+            transition: "stroke-dashoffset 2.2s cubic-bezier(.22,1,.36,1) 0.3s",
+            filter: `drop-shadow(0 0 6px ${tone})`,
           }}
         />
-      ))}
+      </svg>
+
       <div
-        className="h-20 w-20 rounded-full sm:h-24 sm:w-24"
+        className="absolute rounded-full border"
         style={{
-          background: `radial-gradient(circle at 40% 35%, color-mix(in oklab, ${tone} 92%, white), ${tone} 55%, transparent 78%)`,
-          boxShadow: `0 0 80px 0px ${tone}`,
+          width: "72%",
+          height: "72%",
+          borderColor: `color-mix(in oklab, ${tone} 45%, transparent)`,
+          animation: "ab-boot-spin 7s linear infinite",
+        }}
+      />
+      <div
+        className="h-10 w-10 rounded-full sm:h-12 sm:w-12"
+        style={{
+          background: `radial-gradient(circle at 40% 35%, color-mix(in oklab, ${tone} 92%, white), ${tone} 58%, transparent 80%)`,
+          boxShadow: `0 0 60px 0 ${tone}`,
           animation: speaking
-            ? "ab-boot-react 0.32s ease-in-out infinite"
+            ? "ab-boot-react 0.34s ease-in-out infinite"
             : "ab-boot-breathe 3s ease-in-out infinite",
         }}
       />

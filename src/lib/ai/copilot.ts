@@ -1,16 +1,43 @@
+import { deltaOverWindow, minutesToThreshold, recordTrends, slopePerMinute } from "@/lib/ai/trends";
 import type { DiagnosticMessage, TelemetrySnapshot } from "@/lib/telemetry/types";
 
 /** Bağlamsal arayüz modları — sürüş dinamiğine göre türetilir. */
 export type DriveMode = "park" | "city" | "highway";
+
+/** Otoyol moduna giriş/çıkış eşikleri — sınırda titremeyi önleyen histerezis. */
+export const HIGHWAY_ENTER_KMH = 100;
+export const HIGHWAY_EXIT_KMH = 92;
+const STABLE_MS = 5000;
+const QUICK_MS = 1200;
+
+let activeMode: DriveMode = "park";
+let candidateMode: DriveMode = "park";
+let candidateSince = 0;
+
+function rawMode(kmh: number, rev: number, current: DriveMode): DriveMode {
+  if (kmh >= HIGHWAY_ENTER_KMH) return "highway";
+  if (current === "highway" && kmh > HIGHWAY_EXIT_KMH) return "highway";
+  if (kmh < 2 && rev < 1100) return "park";
+  return "city";
+}
 
 export function driveModeOf(snapshot: TelemetrySnapshot): DriveMode {
   const speed = snapshot.signals.speed;
   const rpm = snapshot.signals.rpm;
   const kmh = speed && Number.isFinite(speed.value) ? speed.value : 0;
   const rev = rpm && Number.isFinite(rpm.value) ? rpm.value : 0;
-  if (kmh >= 100) return "highway";
-  if (kmh < 2 && rev < 1100) return "park";
-  return "city";
+  const next = rawMode(kmh, rev, activeMode);
+  const now = snapshot.at || Date.now();
+
+  if (next !== candidateMode) {
+    candidateMode = next;
+    candidateSince = now;
+  }
+  if (next !== activeMode) {
+    const needed = next === "highway" || activeMode === "highway" ? STABLE_MS : QUICK_MS;
+    if (now - candidateSince >= needed) activeMode = next;
+  }
+  return activeMode;
 }
 
 export const DRIVE_MODE_LABEL: Record<DriveMode, string> = {
@@ -43,6 +70,121 @@ export function buildInsights(
   diagnostics: DiagnosticMessage[],
 ): Insight[] {
   const out: Insight[] = [];
+  recordTrends(snapshot);
+
+  /* ---------------------------------------- öngörülü (trend) uyarı motoru */
+  const trend = (
+    key: Parameters<typeof slopePerMinute>[0],
+    config: {
+      id: string;
+      title: string;
+      rising: boolean;
+      minSlope: number;
+      threshold: number;
+      unit: string;
+      what: string;
+      cause: string;
+      advice: string;
+    },
+  ) => {
+    const slope = slopePerMinute(key);
+    const delta = deltaOverWindow(key);
+    if (slope === null || delta === null) return;
+    const moving = config.rising ? slope >= config.minSlope : slope <= -config.minSlope;
+    if (!moving) return;
+    const eta = minutesToThreshold(key, config.threshold);
+    out.push({
+      id: config.id,
+      severity: eta !== null && eta < 4 ? "critical" : eta !== null && eta < 12 ? "warn" : "info",
+      title: config.title,
+      message: `${config.what} son ${Math.round(delta.seconds)} saniyede ${Math.abs(delta.change).toFixed(1)} ${config.unit} ${
+        config.rising ? "yükseldi" : "düştü"
+      }; ${config.cause}${
+        eta !== null
+          ? ` Bu hızla ${Math.round(eta)} dakika içinde ${config.threshold} ${config.unit} sınırına ulaşır.`
+          : ""
+      }`,
+      action: config.advice,
+    });
+  };
+
+  trend("coolant", {
+    id: "trend-coolant",
+    title: "Termal Trend",
+    rising: true,
+    minSlope: 1.2,
+    threshold: 105,
+    unit: "°C",
+    what: "Soğutma suyu sıcaklığı",
+    cause: "soğutma devresi yükü atamıyor.",
+    advice: "Yükü azalt, fan ve termostat çalışmasını izliyorum.",
+  });
+  trend("oilTemp", {
+    id: "trend-oil",
+    title: "Yağ Sıcaklığı Trendi",
+    rising: true,
+    minSlope: 1.4,
+    threshold: 130,
+    unit: "°C",
+    what: "Motor yağı sıcaklığı",
+    cause: "yağ viskozitesi düşüyor ve yağlama payı azalıyor.",
+    advice: "Devirleri düşürüp birkaç dakika sabit hızda seyret.",
+  });
+  trend("egt", {
+    id: "trend-egt",
+    title: "Egzoz Gazı Trendi",
+    rising: true,
+    minSlope: 12,
+    threshold: 780,
+    unit: "°C",
+    what: "Egzoz gazı sıcaklığı",
+    cause: "yüksek yük altında yanma sıcaklığı tırmanıyor.",
+    advice: "Uzun tam gaz çekişlerinden kaçın.",
+  });
+  trend("voltage", {
+    id: "trend-voltage",
+    title: "Şarj Trendi",
+    rising: false,
+    minSlope: 0.08,
+    threshold: 11.8,
+    unit: "V",
+    what: "Akü voltajı",
+    cause: "alternatör şarj dengesini koruyamıyor.",
+    advice: "Gereksiz tüketicileri kapat, şarj devresini test ettir.",
+  });
+  trend("dpfSoot", {
+    id: "trend-dpf",
+    title: "Partikül Filtresi Trendi",
+    rising: true,
+    minSlope: 0.25,
+    threshold: 45,
+    unit: "g",
+    what: "Filtredeki kurum miktarı",
+    cause: "kısa mesafeli sürüş rejenerasyonu engelliyor.",
+    advice: "20 dakikalık 2000+ devir seyir dolumu temizler.",
+  });
+  trend("padWearFront", {
+    id: "trend-pad",
+    title: "Balata Aşınma Trendi",
+    rising: false,
+    minSlope: 0.2,
+    threshold: 10,
+    unit: "%",
+    what: "Ön balata ömrü",
+    cause: "sert frenleme profili aşınmayı hızlandırıyor.",
+    advice: "Motor freni kullanımı aşınmayı yavaşlatır.",
+  });
+  trend("tpmsFL", {
+    id: "trend-tpms",
+    title: "Lastik Basıncı Trendi",
+    rising: false,
+    minSlope: 0.02,
+    threshold: 1.8,
+    unit: "bar",
+    what: "Sol ön lastik basıncı",
+    cause: "yavaş bir hava kaybı görüyorum.",
+    advice: "Supap ve sızdırmazlığı kontrol ettir.",
+  });
 
   const voltage = num(snapshot, "voltage");
   if (voltage !== null && voltage < 12.2 && !snapshot.flags.cranking) {
@@ -125,7 +267,7 @@ export function buildInsights(
     });
   }
 
-  return out.slice(0, 6);
+  return out.slice(0, 7);
 }
 
 export interface CommandResult {

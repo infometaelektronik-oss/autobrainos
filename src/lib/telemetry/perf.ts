@@ -63,7 +63,7 @@ export function usePerfMetrics(snapshot: TelemetrySnapshot): PerfMetrics {
         const b = window1s[i];
         if (a !== undefined && b !== undefined) gaps.push(b - a);
       }
-      const median = gaps.length > 0 ? [...gaps].sort((x, y) => x - y)[gaps.length >> 1] ?? 0 : 0;
+      const median = gaps.length > 0 ? ([...gaps].sort((x, y) => x - y)[gaps.length >> 1] ?? 0) : 0;
       const dropped = median > 0 ? gaps.filter((g) => g > median * 1.8).length : 0;
       const frameList = frames.current;
       const avgFrame =
