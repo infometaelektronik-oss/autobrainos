@@ -119,6 +119,8 @@ export interface SpeakOptions {
   style?: "assistant" | "boot";
   /** Sabit metinleri cihazda sakla. */
   remember?: boolean;
+  /** Sesi üretmeden altyazı süresi kadar kuyrukta tut. */
+  silent?: boolean;
 }
 
 /** ChatGPT sesiyle konuşur; bitişini bekleyebilirsin. */
