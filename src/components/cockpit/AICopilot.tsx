@@ -169,7 +169,16 @@ export function AICopilot() {
       appendAiLog(`a-${Date.now()}`, result.reply);
       say(result.reply);
     },
-    [appendAiLog, findChargingStations, media, say, setClimateTarget, showNavigation, snapshot],
+    [
+      appendAiLog,
+      findChargingStations,
+      media,
+      navigate,
+      say,
+      setClimateTarget,
+      showNavigation,
+      snapshot,
+    ],
   );
 
   const toggleListening = useCallback(() => {
