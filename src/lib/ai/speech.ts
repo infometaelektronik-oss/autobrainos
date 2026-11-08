@@ -271,11 +271,9 @@ async function drainSpeechQueue(generation: number) {
       await wait(140);
     }
   } finally {
-    if (generation === queueGeneration) {
-      queueActive = false;
-      emitQueue();
-      if (speechQueue.length > 0) void drainSpeechQueue(generation);
-    }
+    queueActive = false;
+    emitQueue();
+    if (speechQueue.length > 0) void drainSpeechQueue(queueGeneration);
   }
 }
 
