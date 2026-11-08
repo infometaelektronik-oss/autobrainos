@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import {
   ListOrdered,
   Mic,
@@ -38,6 +39,7 @@ const SEVERITY_RANK = { info: 0, warn: 1, critical: 2 } as const;
 
 /** Boot ekranındaki hologramın kalıcı, küçültülmüş kokpit versiyonu. */
 export function AICopilot() {
+  const navigate = useNavigate();
   const {
     snapshot,
     diagnostics,
