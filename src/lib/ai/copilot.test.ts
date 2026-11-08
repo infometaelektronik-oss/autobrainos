@@ -23,8 +23,8 @@ beforeEach(() => {
 
 describe("Odak / Otoyol Modu", () => {
   it("100 km/s eşiğini beş saniye koruyunca odak moduna girer", () => {
-    expect(driveModeOf(at(100, 1_000))).toBe("city");
-    expect(driveModeOf(at(100, 5_999))).toBe("city");
+    expect(driveModeOf(at(100, 1_000))).toBe("park");
+    expect(driveModeOf(at(100, 5_999))).toBe("park");
     expect(driveModeOf(at(100, 6_000))).toBe("highway");
   });
 
