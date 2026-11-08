@@ -24,15 +24,8 @@ function mmss(seconds: number) {
 }
 
 export function MediaPanel() {
-  const {
-    media,
-    simulateCall,
-    snapshot,
-    settings,
-    climate,
-    charging,
-    navigationRequest,
-  } = useTelemetry();
+  const { media, simulateCall, snapshot, settings, climate, charging, navigationRequest } =
+    useTelemetry();
   const [micOn, setMicOn] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
@@ -188,7 +181,10 @@ export function MediaPanel() {
         {micError && <p className="mt-2 text-xs text-destructive">{micError}</p>}
       </section>
 
-      <section aria-label="Klima durumu" className="panel flex items-center justify-between gap-3 p-4">
+      <section
+        aria-label="Klima durumu"
+        className="panel flex items-center justify-between gap-3 p-4"
+      >
         <div>
           <span className="label-xs">Klima · Otomatik</span>
           <p className="mt-1 text-xs text-muted-foreground">Sesli komutla ayarlanan hedef</p>
@@ -196,7 +192,10 @@ export function MediaPanel() {
         <span className="digits text-3xl text-primary">{climate.target}°C</span>
       </section>
 
-      <section id="navigation-panel" className="panel relative min-h-[180px] flex-1 overflow-hidden p-4">
+      <section
+        id="navigation-panel"
+        className="panel relative min-h-[180px] flex-1 overflow-hidden p-4"
+      >
         <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(oklch(0.4_0.03_240/.5)_1px,transparent_1px),linear-gradient(90deg,oklch(0.4_0.03_240/.5)_1px,transparent_1px)] [background-size:34px_34px]" />
         <div className="relative flex h-full flex-col justify-between">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
@@ -221,10 +220,15 @@ export function MediaPanel() {
                   </div>
                   <ul className="space-y-1.5">
                     {charging.stations.map((station) => (
-                      <li key={station.id} className="rounded-lg bg-background/70 px-3 py-2 text-xs">
+                      <li
+                        key={station.id}
+                        className="rounded-lg bg-background/70 px-3 py-2 text-xs"
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <span className="truncate font-semibold">{station.name}</span>
-                          <span className="digits shrink-0 text-primary">{station.distanceKm.toFixed(1)} km</span>
+                          <span className="digits shrink-0 text-primary">
+                            {station.distanceKm.toFixed(1)} km
+                          </span>
                         </div>
                         <p className="mt-1 text-muted-foreground">
                           {station.powerKw} kW · {station.available}/{station.total} uygun
@@ -238,7 +242,8 @@ export function MediaPanel() {
                     rel="noreferrer"
                     className="flex items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/12 px-3 py-2 text-xs font-semibold text-primary"
                   >
-                    <ExternalLink className="h-3.5 w-3.5" /> Canlı haritada yakındaki istasyonları ara
+                    <ExternalLink className="h-3.5 w-3.5" /> Canlı haritada yakındaki istasyonları
+                    ara
                   </a>
                 </div>
               )}

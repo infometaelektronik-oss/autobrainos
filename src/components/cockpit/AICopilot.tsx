@@ -60,10 +60,14 @@ export function AICopilot() {
   const announcedRef = useRef<Map<string, number>>(new Map());
   const safetyRef = useRef<{ key: string; at: number } | null>(null);
 
-  useEffect(() => subscribeSpeech((next, text) => {
-    setSpeaking(next);
-    setCaption(text);
-  }), []);
+  useEffect(
+    () =>
+      subscribeSpeech((next, text) => {
+        setSpeaking(next);
+        setCaption(text);
+      }),
+    [],
+  );
 
   useEffect(() => subscribeSpeechQueue(setQueueCount), []);
 
@@ -120,7 +124,8 @@ export function AICopilot() {
 
   // Radar ve şerit müdahalesi de aynı kesintisiz bildirim kuyruğunu kullanır.
   useEffect(() => {
-    const key = assist.gapRating === "critical" ? "gap" : assist.lane === "intervention" ? "lane" : null;
+    const key =
+      assist.gapRating === "critical" ? "gap" : assist.lane === "intervention" ? "lane" : null;
     if (!key) return;
     const now = Date.now();
     if (safetyRef.current?.key === key && now - safetyRef.current.at < 20_000) return;

@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils";
 
 export function AIBar({ criticalOnly = false }: { criticalOnly?: boolean }) {
   const { diagnostics } = useTelemetry();
-  const shown = criticalOnly ? diagnostics.filter((item) => item.severity === "critical") : diagnostics;
+  const shown = criticalOnly
+    ? diagnostics.filter((item) => item.severity === "critical")
+    : diagnostics;
 
   if (criticalOnly && shown.length === 0) return null;
 

@@ -13,10 +13,7 @@ import { playAlarm, playRingtone } from "../audio";
 import { runDiagnostics } from "./diagnostics";
 import { Elm327Client } from "./elm327";
 import { loadTrips, saveTrips, snapshotToRow, type TripLog } from "./logging";
-import {
-  DEMO_CHARGING_STATIONS,
-  type ChargingStation,
-} from "./navigation";
+import { DEMO_CHARGING_STATIONS, type ChargingStation } from "./navigation";
 import type { SignalKey } from "./signals";
 import { UNSUPPORTED_BY_TRIM, VehicleSimulator, emptySignals } from "./simulator";
 import { hasWebBluetooth, hasWebSerial, openBluetoothPipe, openSerialPipe } from "./transports";
