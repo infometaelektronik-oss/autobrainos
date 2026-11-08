@@ -1,4 +1,6 @@
 import {
+  BatteryCharging,
+  ExternalLink,
   Map as MapIcon,
   Mic,
   MicOff,
@@ -13,6 +15,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { openMicrophone, type MicSession } from "@/lib/audio";
+import { LIVE_CHARGING_MAP_URL } from "@/lib/telemetry/navigation";
 import { useTelemetry } from "@/lib/telemetry/store";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +24,8 @@ function mmss(seconds: number) {
 }
 
 export function MediaPanel() {
-  const { media, simulateCall, snapshot, settings } = useTelemetry();
+  const { media, simulateCall, snapshot, settings, climate, charging, navigationRequest } =
+    useTelemetry();
   const [micOn, setMicOn] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
@@ -57,6 +61,14 @@ export function MediaPanel() {
       sessionRef.current = null;
     };
   }, [micOn, settings.micDeviceId]);
+
+  useEffect(() => {
+    if (navigationRequest === 0) return;
+    document.getElementById("navigation-panel")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [navigationRequest]);
 
   const progress = (media.position / media.track.duration) * 100;
 
@@ -169,7 +181,21 @@ export function MediaPanel() {
         {micError && <p className="mt-2 text-xs text-destructive">{micError}</p>}
       </section>
 
-      <section className="panel relative min-h-[180px] flex-1 overflow-hidden p-4">
+      <section
+        aria-label="Klima durumu"
+        className="panel flex items-center justify-between gap-3 p-4"
+      >
+        <div>
+          <span className="label-xs">Klima · Otomatik</span>
+          <p className="mt-1 text-xs text-muted-foreground">Sesli komutla ayarlanan hedef</p>
+        </div>
+        <span className="digits text-3xl text-primary">{climate.target}°C</span>
+      </section>
+
+      <section
+        id="navigation-panel"
+        className="panel relative min-h-[180px] flex-1 overflow-hidden p-4"
+      >
         <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(oklch(0.4_0.03_240/.5)_1px,transparent_1px),linear-gradient(90deg,oklch(0.4_0.03_240/.5)_1px,transparent_1px)] [background-size:34px_34px]" />
         <div className="relative flex h-full flex-col justify-between">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
@@ -181,12 +207,46 @@ export function MediaPanel() {
           </div>
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Navigation className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate">
-                  Çevrimdışı / çevrimiçi harita katmanı bu konteynere gömülür.
-                </span>
-              </p>
+              {charging.searchedAt === null ? (
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Navigation className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate">“En yakın şarj istasyonunu bul” diyebilirsin.</span>
+                </p>
+              ) : (
+                <div className="w-full space-y-2" aria-live="polite">
+                  <div className="flex items-center gap-2 text-xs text-primary">
+                    <BatteryCharging className="h-4 w-4" />
+                    <span>Şarj araması açık · listedeki sonuçlar demo verisidir</span>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {charging.stations.map((station) => (
+                      <li
+                        key={station.id}
+                        className="rounded-lg bg-background/70 px-3 py-2 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate font-semibold">{station.name}</span>
+                          <span className="digits shrink-0 text-primary">
+                            {station.distanceKm.toFixed(1)} km
+                          </span>
+                        </div>
+                        <p className="mt-1 text-muted-foreground">
+                          {station.powerKw} kW · {station.available}/{station.total} uygun
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={LIVE_CHARGING_MAP_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/12 px-3 py-2 text-xs font-semibold text-primary"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Canlı haritada yakındaki istasyonları
+                    ara
+                  </a>
+                </div>
+              )}
               <p className="digits mt-2 text-2xl">
                 {snapshot.signals.speed.status === "live"
                   ? snapshot.signals.speed.value.toFixed(0)

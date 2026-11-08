@@ -10,10 +10,10 @@ export function AIAnalysisPanel({ compact = false }: { compact?: boolean }) {
   const { snapshot, diagnostics } = useTelemetry();
   const insights = useMemo(() => buildInsights(snapshot, diagnostics), [snapshot, diagnostics]);
   const mode = driveModeOf(snapshot);
-  const shown = compact ? insights.filter((i) => i.severity !== "info").slice(0, 3) : insights;
+  const shown = compact ? insights.filter((i) => i.severity === "critical").slice(0, 3) : insights;
 
   return (
-    <section aria-label="Yapay zeka analiz paneli" className="panel p-4">
+    <section id="ai-analysis-panel" aria-label="Yapay zeka analiz paneli" className="panel p-4">
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
         <Brain className="h-4 w-4 shrink-0 text-primary" />
         <span className="label-xs truncate">AI Analiz Paneli</span>

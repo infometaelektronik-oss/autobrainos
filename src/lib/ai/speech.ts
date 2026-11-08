@@ -13,7 +13,9 @@ let current = "";
 export function subscribeSpeech(listener: Listener) {
   listeners.add(listener);
   listener(speaking, current);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 function emit(next: boolean, text: string) {
@@ -119,6 +121,8 @@ export interface SpeakOptions {
   style?: "assistant" | "boot";
   /** Sabit metinleri cihazda sakla. */
   remember?: boolean;
+  /** Sesi üretmeden altyazı süresi kadar kuyrukta tut. */
+  silent?: boolean;
 }
 
 /** ChatGPT sesiyle konuşur; bitişini bekleyebilirsin. */
@@ -221,12 +225,75 @@ export async function speakAsync(text: string, options: SpeakOptions = {}): Prom
   }
 }
 
-/** Ateşle-ve-devam et: konuşmayı başlatır, beklemez. */
-export function speak(text: string, options?: SpeakOptions) {
-  void speakAsync(text, options);
+/* ------------------------------------------------------- notification queue */
+
+interface QueueItem {
+  text: string;
+  options: SpeakOptions;
+}
+
+type QueueListener = (waiting: number) => void;
+
+const speechQueue: QueueItem[] = [];
+const queueListeners = new Set<QueueListener>();
+let queueActive = false;
+let queueGeneration = 0;
+
+function emitQueue() {
+  for (const listener of queueListeners) listener(speechQueue.length);
+}
+
+/** Bekleyen bildirim sayısı; arayüzde kuyruk rozetini besler. */
+export function subscribeSpeechQueue(listener: QueueListener) {
+  queueListeners.add(listener);
+  listener(speechQueue.length);
+  return () => {
+    queueListeners.delete(listener);
+  };
+}
+
+async function drainSpeechQueue(generation: number) {
+  if (queueActive) return;
+  queueActive = true;
+  try {
+    while (generation === queueGeneration && speechQueue.length > 0) {
+      const item = speechQueue.shift();
+      if (!item) break;
+      emitQueue();
+
+      if (item.options.silent) {
+        emit(true, item.text);
+        await wait(Math.min(7000, 1200 + item.text.length * 55));
+        emit(false, "");
+      } else {
+        await speakAsync(item.text, item.options);
+      }
+
+      if (generation !== queueGeneration) return;
+      // Yeni cümleyi daha ses başlamadan göster; altyazı iki bildirim arasında kaybolmaz.
+      if (speechQueue.length > 0) emit(true, speechQueue[0]?.text ?? "");
+      await wait(140);
+    }
+  } finally {
+    queueActive = false;
+    emitQueue();
+    if (speechQueue.length > 0) void drainSpeechQueue(queueGeneration);
+  }
+}
+
+/** Bildirimi kuyruğa ekler; mevcut konuşmayı kesmez. */
+export function speak(text: string, options: SpeakOptions = {}) {
+  const clean = text.trim();
+  if (!clean) return;
+  speechQueue.push({ text: clean, options });
+  emitQueue();
+  void drainSpeechQueue(queueGeneration);
 }
 
 export function cancelSpeech() {
+  queueGeneration += 1;
+  speechQueue.length = 0;
+  emitQueue();
   controller?.abort();
   controller = null;
   for (const source of sources) {

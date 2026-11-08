@@ -24,7 +24,13 @@ const SOURCE_META = {
   demo: { label: "Demo / Simülasyon", icon: FlaskConical },
 } as const;
 
-export function StatusBar({ onOpenSource }: { onOpenSource: () => void }) {
+export function StatusBar({
+  onOpenSource,
+  focused = false,
+}: {
+  onOpenSource: () => void;
+  focused?: boolean;
+}) {
   const { snapshot, source, connection, identity } = useTelemetry();
   const [clock, setClock] = useState("--:--");
 
@@ -103,11 +109,13 @@ export function StatusBar({ onOpenSource }: { onOpenSource: () => void }) {
 
         <div className="digits rounded-lg bg-muted px-3 py-2 text-sm">{clock}</div>
 
-        <nav className="flex items-center gap-1">
-          <IconLink to="/" label="Kokpit" icon={GaugeIcon} />
-          <IconLink to="/telemetry/engine" label="Telemetri" icon={Activity} />
-          <IconLink to="/settings" label="Ayarlar" icon={Settings} />
-        </nav>
+        {!focused && (
+          <nav className="flex items-center gap-1">
+            <IconLink to="/" label="Kokpit" icon={GaugeIcon} />
+            <IconLink to="/telemetry/engine" label="Telemetri" icon={Activity} />
+            <IconLink to="/settings" label="Ayarlar" icon={Settings} />
+          </nav>
+        )}
       </div>
     </header>
   );

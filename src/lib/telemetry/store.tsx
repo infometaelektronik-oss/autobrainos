@@ -13,6 +13,7 @@ import { playAlarm, playRingtone } from "../audio";
 import { runDiagnostics } from "./diagnostics";
 import { Elm327Client } from "./elm327";
 import { loadTrips, saveTrips, snapshotToRow, type TripLog } from "./logging";
+import { DEMO_CHARGING_STATIONS, type ChargingStation } from "./navigation";
 import type { SignalKey } from "./signals";
 import { UNSUPPORTED_BY_TRIM, VehicleSimulator, emptySignals } from "./simulator";
 import { hasWebBluetooth, hasWebSerial, openBluetoothPipe, openSerialPipe } from "./transports";
@@ -206,6 +207,12 @@ interface TelemetryContextValue {
     seek: (seconds: number) => void;
     setVolume: (v: number) => void;
   };
+  climate: { target: number; enabled: boolean };
+  setClimateTarget: (target: number) => void;
+  charging: { stations: ChargingStation[]; searchedAt: number | null };
+  findChargingStations: () => void;
+  navigationRequest: number;
+  showNavigation: () => void;
   settings: Settings;
   updateSettings: (patch: Partial<Settings>) => void;
   trips: TripLog[];
@@ -255,6 +262,9 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [volume, setVolume] = useState(0.7);
+  const [climateTarget, setClimateTargetState] = useState(21);
+  const [chargingSearchedAt, setChargingSearchedAt] = useState<number | null>(null);
+  const [navigationRequest, setNavigationRequest] = useState(0);
 
   const simulatorRef = useRef<VehicleSimulator | null>(null);
   const clientRef = useRef<Elm327Client | null>(null);
@@ -504,6 +514,18 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
     [mediaIndex, playing, position, volume, call.active],
   );
 
+  /* --------------------------------------------------- voice command actions */
+  const setClimateTarget = useCallback((target: number) => {
+    setClimateTargetState(Math.min(30, Math.max(16, Math.round(target))));
+  }, []);
+
+  const showNavigation = useCallback(() => setNavigationRequest((value) => value + 1), []);
+
+  const findChargingStations = useCallback(() => {
+    setChargingSearchedAt(Date.now());
+    showNavigation();
+  }, [showNavigation]);
+
   /* ------------------------------------------- steering wheel ring shortcuts */
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -561,6 +583,12 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
     acceptCall,
     declineCall,
     media,
+    climate: { target: climateTarget, enabled: true },
+    setClimateTarget,
+    charging: { stations: DEMO_CHARGING_STATIONS, searchedAt: chargingSearchedAt },
+    findChargingStations,
+    navigationRequest,
+    showNavigation,
     settings,
     updateSettings,
     trips,

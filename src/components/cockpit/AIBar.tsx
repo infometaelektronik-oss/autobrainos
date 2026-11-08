@@ -3,8 +3,13 @@ import { Brain, ChevronRight } from "lucide-react";
 import { useTelemetry } from "@/lib/telemetry/store";
 import { cn } from "@/lib/utils";
 
-export function AIBar() {
+export function AIBar({ criticalOnly = false }: { criticalOnly?: boolean }) {
   const { diagnostics } = useTelemetry();
+  const shown = criticalOnly
+    ? diagnostics.filter((item) => item.severity === "critical")
+    : diagnostics;
+
+  if (criticalOnly && shown.length === 0) return null;
 
   return (
     <section
@@ -16,7 +21,7 @@ export function AIBar() {
         <span className="label-xs !text-primary hidden sm:inline">AI Teşhis</span>
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-4 overflow-x-auto px-1 py-2 [scrollbar-width:none]">
-        {diagnostics.map((message) => (
+        {shown.map((message) => (
           <div key={message.id} className="flex min-w-0 shrink-0 items-center gap-2">
             <span
               className={cn(
