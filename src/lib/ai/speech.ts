@@ -289,7 +289,6 @@ export function speak(text: string, options: SpeakOptions = {}) {
 export function cancelSpeech() {
   queueGeneration += 1;
   speechQueue.length = 0;
-  queueActive = false;
   emitQueue();
   controller?.abort();
   controller = null;
