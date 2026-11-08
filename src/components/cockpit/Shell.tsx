@@ -1,5 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { driveModeOf } from "@/lib/ai/copilot";
+import { useTelemetry } from "@/lib/telemetry/store";
 
 import { AIBar } from "./AIBar";
 import { AICopilot } from "./AICopilot";
@@ -23,11 +26,20 @@ const SECTIONS = [
 /** Persistent cockpit chrome: status bar, page body, AI bar and overlays. */
 export function CockpitShell({ children, nav = true }: { children: ReactNode; nav?: boolean }) {
   const [sourceOpen, setSourceOpen] = useState(false);
+  const { snapshot } = useTelemetry();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const focused = driveModeOf(snapshot) === "highway";
+
+  // 100 km/s üzerindeki kararlı odak modunda sürüş dışı sayfada kalınamaz.
+  useEffect(() => {
+    if (focused && location.pathname !== "/") void navigate({ to: "/" });
+  }, [focused, location.pathname, navigate]);
 
   return (
     <div className="flex min-h-screen flex-col gap-2 p-2 sm:gap-3 sm:p-3">
-      <StatusBar onOpenSource={() => setSourceOpen(true)} />
-      {nav && (
+      <StatusBar focused={focused} onOpenSource={() => setSourceOpen(true)} />
+      {nav && !focused && (
         <nav className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
           {SECTIONS.map((section) => (
             <Link
@@ -42,7 +54,7 @@ export function CockpitShell({ children, nav = true }: { children: ReactNode; na
         </nav>
       )}
       <main className="min-h-0 flex-1 pb-24">{children}</main>
-      <AIBar />
+      <AIBar criticalOnly={focused} />
       <SourceModal open={sourceOpen} onClose={() => setSourceOpen(false)} />
       <CallOverlay />
       <CriticalOverlay />
