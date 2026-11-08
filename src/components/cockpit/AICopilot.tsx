@@ -1,15 +1,29 @@
-import { Mic, MicOff, Snowflake, Sparkles, Volume2, VolumeX, X } from "lucide-react";
+import {
+  ListOrdered,
+  Mic,
+  MicOff,
+  Minus,
+  Plus,
+  Snowflake,
+  Sparkles,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { executeCommand } from "@/lib/ai/commandActions";
+import { buildInsights, driveModeOf, interpretCommand, DRIVE_MODE_LABEL } from "@/lib/ai/copilot";
+import { useDriverAssist } from "@/lib/ai/driverAssist";
 import {
   cancelSpeech,
   listen,
   recognitionSupported,
   speak,
   subscribeSpeech,
+  subscribeSpeechQueue,
   type RecognitionHandle,
 } from "@/lib/ai/speech";
-import { buildInsights, driveModeOf, interpretCommand, DRIVE_MODE_LABEL } from "@/lib/ai/copilot";
 import { useTelemetry } from "@/lib/telemetry/store";
 import { cn } from "@/lib/utils";
 
@@ -20,89 +34,126 @@ const SUGGESTIONS = [
   "Sonraki parçaya geç",
 ];
 
+const SEVERITY_RANK = { info: 0, warn: 1, critical: 2 } as const;
+
 /** Boot ekranındaki hologramın kalıcı, küçültülmüş kokpit versiyonu. */
 export function AICopilot() {
-  const { snapshot, diagnostics, media } = useTelemetry();
+  const {
+    snapshot,
+    diagnostics,
+    media,
+    climate,
+    setClimateTarget,
+    findChargingStations,
+    showNavigation,
+  } = useTelemetry();
   const [speaking, setSpeaking] = useState(false);
   const [caption, setCaption] = useState("");
+  const [queueCount, setQueueCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
   const [log, setLog] = useState<Array<{ id: string; role: "user" | "ai"; text: string }>>([]);
-  const [climate, setClimate] = useState(21);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const handleRef = useRef<RecognitionHandle | null>(null);
-  const announcedRef = useRef<Set<string>>(new Set());
+  const announcedRef = useRef<Map<string, number>>(new Map());
+  const safetyRef = useRef<{ key: string; at: number } | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = subscribeSpeech((next, text) => {
-      setSpeaking(next);
-      setCaption(next ? text : "");
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  useEffect(() => subscribeSpeech((next, text) => {
+    setSpeaking(next);
+    setCaption(text);
+  }), []);
+
+  useEffect(() => subscribeSpeechQueue(setQueueCount), []);
 
   const insights = useMemo(() => buildInsights(snapshot, diagnostics), [snapshot, diagnostics]);
+  const assist = useDriverAssist(snapshot);
   const mode = driveModeOf(snapshot);
+  const highway = mode === "highway";
   const worst = insights.some((i) => i.severity === "critical")
     ? "critical"
     : insights.some((i) => i.severity === "warn")
       ? "warn"
       : "info";
 
-  // Otoyol/Odak modunda sesli asistan paneli kapanır, yalnız hologram kalır.
+  // Odak modunda yalnız hologram kalır; panel ve mikrofon kontrolü gizlenir.
   useEffect(() => {
-    if (mode === "highway") setOpen(false);
-  }, [mode]);
+    if (!highway) return;
+    setOpen(false);
+    handleRef.current?.stop();
+    handleRef.current = null;
+    setListening(false);
+  }, [highway]);
 
   const rpm = snapshot.signals.rpm.value;
   const load = Number.isFinite(rpm) ? Math.min(1, Math.max(0, rpm / 6000)) : 0;
 
-
   const say = useCallback(
     (text: string) => {
-      if (muted) {
-        setCaption(text);
-        window.setTimeout(() => setCaption(""), 2600);
-        return;
-      }
-      speak(text);
+      // speak() mevcut anlatımı kesmez; ses ve altyazı aynı sırayla ilerler.
+      speak(text, { silent: muted });
     },
     [muted],
   );
 
-  // Proaktif sesli bildirim: yeni kritik yorum çıktığında asistan konuşur.
+  const appendAiLog = useCallback((id: string, text: string) => {
+    setLog((prev) => [...prev.slice(-8), { id, role: "ai", text }]);
+  }, []);
+
+  // Yeni uyarılar kuyruğa girer; aynı seviye tekrar okunmaz, seviye artışı yeniden bildirilir.
   useEffect(() => {
-    const critical = insights.find((i) => i.severity === "critical");
-    if (!critical || announcedRef.current.has(critical.id)) return;
-    announcedRef.current.add(critical.id);
-    say(critical.message);
-    setLog((prev) => [
-      ...prev.slice(-8),
-      { id: `${critical.id}-${Date.now()}`, role: "ai", text: critical.message },
-    ]);
-  }, [insights, say]);
+    const alerts = insights
+      .filter((insight) => insight.severity !== "info")
+      .sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
+
+    for (const insight of alerts) {
+      const rank = SEVERITY_RANK[insight.severity];
+      const previous = announcedRef.current.get(insight.id) ?? -1;
+      if (previous >= rank) continue;
+      announcedRef.current.set(insight.id, rank);
+      const text = `${insight.title}. ${insight.message}${insight.action ? ` ${insight.action}` : ""}`;
+      say(text);
+      appendAiLog(`${insight.id}-${Date.now()}-${rank}`, text);
+    }
+  }, [insights, say, appendAiLog]);
+
+  // Radar ve şerit müdahalesi de aynı kesintisiz bildirim kuyruğunu kullanır.
+  useEffect(() => {
+    const key = assist.gapRating === "critical" ? "gap" : assist.lane === "intervention" ? "lane" : null;
+    if (!key) return;
+    const now = Date.now();
+    if (safetyRef.current?.key === key && now - safetyRef.current.at < 20_000) return;
+    safetyRef.current = { key, at: now };
+    const text =
+      key === "gap"
+        ? "Takip mesafesi kritik. Öndeki araçla güvenli mesafeyi artır."
+        : "Şeritten ayrılma riski var. Direksiyon kontrolünü düzelt.";
+    say(text);
+    appendAiLog(`safety-${key}-${now}`, text);
+  }, [assist.gapRating, assist.lane, say, appendAiLog]);
 
   const runCommand = useCallback(
     (text: string) => {
       if (!text.trim()) return;
       setLog((prev) => [...prev.slice(-8), { id: `u-${Date.now()}`, role: "user", text }]);
       const result = interpretCommand(text, snapshot);
-      if (result.climateTarget) setClimate(result.climateTarget);
-      if (result.mediaAction === "next") media.next();
-      else if (result.mediaAction === "prev") media.prev();
-      else if (result.mediaAction === "play" && !media.playing) media.toggle();
-      else if (result.mediaAction === "pause" && media.playing) media.toggle();
-      setLog((prev) => [
-        ...prev.slice(-8),
-        { id: `a-${Date.now()}`, role: "ai", text: result.reply },
-      ]);
+      executeCommand(result, {
+        setClimate: setClimateTarget,
+        findChargingStations,
+        showNavigation,
+        showDiagnostics: () => {
+          document.getElementById("ai-analysis-panel")?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        },
+        media,
+      });
+      appendAiLog(`a-${Date.now()}`, result.reply);
       say(result.reply);
     },
-    [media, say, snapshot],
+    [appendAiLog, findChargingStations, media, say, setClimateTarget, showNavigation, snapshot],
   );
 
   const toggleListening = useCallback(() => {
@@ -135,12 +186,17 @@ export function AICopilot() {
   return (
     <div className="pointer-events-none fixed bottom-3 left-1/2 z-40 flex w-[min(100%-1rem,720px)] -translate-x-1/2 flex-col items-center gap-2">
       {caption && (
-        <p className="pointer-events-none max-w-full truncate rounded-full bg-background/85 px-4 py-1.5 text-center text-xs text-primary backdrop-blur">
-          {caption}
-        </p>
+        <div className="pointer-events-none flex max-w-full items-center gap-2 rounded-xl bg-background/90 px-4 py-2 text-center text-xs text-primary shadow-lg backdrop-blur">
+          <p className="line-clamp-2">{caption}</p>
+          {queueCount > 0 && (
+            <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold">
+              +{queueCount}
+            </span>
+          )}
+        </div>
       )}
 
-      {open && (
+      {open && !highway && (
         <section
           aria-label="Sesli asistan paneli"
           className="panel pointer-events-auto w-full space-y-3 p-3 backdrop-blur"
@@ -148,9 +204,14 @@ export function AICopilot() {
           <div className="flex items-center justify-between gap-2">
             <span className="label-xs !text-primary">AI Copilot · {DRIVE_MODE_LABEL[mode]}</span>
             <div className="flex items-center gap-1">
+              {queueCount > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-primary/12 px-2 py-1 text-[10px] text-primary">
+                  <ListOrdered className="h-3 w-3" /> {queueCount} sırada
+                </span>
+              )}
               <button
                 type="button"
-                onClick={() => setMuted((m) => !m)}
+                onClick={() => setMuted((value) => !value)}
                 aria-label={muted ? "Sesi aç" : "Sesi kapat"}
                 className="rounded-md border border-border p-1.5 text-muted-foreground"
               >
@@ -170,7 +231,25 @@ export function AICopilot() {
           <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs">
             <Snowflake className="h-4 w-4 shrink-0 text-primary" />
             <span className="text-muted-foreground">Klima hedefi</span>
-            <span className="digits ml-auto text-base">{climate}°C</span>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Klima sıcaklığını azalt"
+                onClick={() => setClimateTarget(climate.target - 1)}
+                className="grid h-7 w-7 place-items-center rounded-md border border-border"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="digits min-w-12 text-center text-base">{climate.target}°C</span>
+              <button
+                type="button"
+                aria-label="Klima sıcaklığını artır"
+                onClick={() => setClimateTarget(climate.target + 1)}
+                className="grid h-7 w-7 place-items-center rounded-md border border-border"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="max-h-40 space-y-1.5 overflow-y-auto">
@@ -222,7 +301,7 @@ export function AICopilot() {
         <button
           type="button"
           aria-label="AI Copilot"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setOpen((value) => !value)}
           className="relative grid h-16 w-16 place-items-center rounded-full"
         >
           <span
@@ -266,19 +345,21 @@ export function AICopilot() {
           <Sparkles className="relative h-4 w-4 text-background" />
         </button>
 
-        <button
-          type="button"
-          onClick={toggleListening}
-          aria-label={listening ? "Dinlemeyi durdur" : "Sesli komutu başlat"}
-          className={cn(
-            "grid h-12 w-12 place-items-center rounded-full border",
-            listening
-              ? "border-secondary bg-secondary/20 text-secondary"
-              : "border-border bg-background/80 text-muted-foreground",
-          )}
-        >
-          {listening ? <Mic className="h-5 w-5 animate-pulse" /> : <MicOff className="h-5 w-5" />}
-        </button>
+        {!highway && (
+          <button
+            type="button"
+            onClick={toggleListening}
+            aria-label={listening ? "Dinlemeyi durdur" : "Sesli komutu başlat"}
+            className={cn(
+              "grid h-12 w-12 place-items-center rounded-full border",
+              listening
+                ? "border-secondary bg-secondary/20 text-secondary"
+                : "border-border bg-background/80 text-muted-foreground",
+            )}
+          >
+            {listening ? <Mic className="h-5 w-5 animate-pulse" /> : <MicOff className="h-5 w-5" />}
+          </button>
+        )}
       </div>
     </div>
   );
