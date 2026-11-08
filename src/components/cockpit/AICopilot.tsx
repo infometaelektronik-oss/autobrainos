@@ -147,13 +147,22 @@ export function AICopilot() {
       const result = interpretCommand(text, snapshot);
       executeCommand(result, {
         setClimate: setClimateTarget,
-        findChargingStations,
-        showNavigation,
+        findChargingStations: () => {
+          void navigate({ to: "/" });
+          findChargingStations();
+        },
+        showNavigation: () => {
+          void navigate({ to: "/" });
+          showNavigation();
+        },
         showDiagnostics: () => {
-          document.getElementById("ai-analysis-panel")?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
+          void navigate({ to: "/" });
+          window.setTimeout(() => {
+            document.getElementById("ai-analysis-panel")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }, 0);
         },
         media,
       });
