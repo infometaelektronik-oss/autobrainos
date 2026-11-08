@@ -297,12 +297,12 @@ export function interpretCommand(rawInput: string, snapshot: TelemetrySnapshot):
     return {
       intent: "charging",
       reply:
-        "En yakın şarj istasyonlarını haritada listeliyorum: 2,4 km mesafede 3 uygun nokta var.",
+        "Şarj istasyonu aramasını navigasyon panelinde açtım. Canlı yakın sonuçlar için harita bağlantısını kullanabilirsin.",
     };
   }
 
   if (/(navigasyon|rota|git|yol tarifi|harita)/.test(text)) {
-    return { intent: "navigation", reply: "Navigasyon panelini açıyorum ve rotayı hazırlıyorum." };
+    return { intent: "navigation", reply: "Navigasyon panelini açıyorum." };
   }
 
   if (/(müzik|şarkı|çal|duraklat|sonraki|önceki|parça)/.test(text)) {
