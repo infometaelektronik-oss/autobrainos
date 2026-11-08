@@ -40,6 +40,13 @@ export function driveModeOf(snapshot: TelemetrySnapshot): DriveMode {
   return activeMode;
 }
 
+/** Testler ve yeni sürüş oturumları için mod geçmişini sıfırlar. */
+export function resetDriveMode() {
+  activeMode = "park";
+  candidateMode = "park";
+  candidateSince = 0;
+}
+
 export const DRIVE_MODE_LABEL: Record<DriveMode, string> = {
   park: "Park / Rapor Modu",
   city: "Şehir Modu",

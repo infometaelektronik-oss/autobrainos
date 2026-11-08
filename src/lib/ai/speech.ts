@@ -13,7 +13,9 @@ let current = "";
 export function subscribeSpeech(listener: Listener) {
   listeners.add(listener);
   listener(speaking, current);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 function emit(next: boolean, text: string) {
@@ -245,7 +247,9 @@ function emitQueue() {
 export function subscribeSpeechQueue(listener: QueueListener) {
   queueListeners.add(listener);
   listener(speechQueue.length);
-  return () => queueListeners.delete(listener);
+  return () => {
+    queueListeners.delete(listener);
+  };
 }
 
 async function drainSpeechQueue(generation: number) {
